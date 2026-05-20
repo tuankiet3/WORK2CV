@@ -2,16 +2,25 @@ import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 
-if (!process.env.DATABASE_URL) {
-  console.warn("⚠️ Warning: DATABASE_URL environment variable is not defined.");
-}
-
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
   pool: Pool | undefined;
 };
 
-const connectionString = process.env.DATABASE_URL;
+let connectionString: string;
+
+if (process.env.NODE_ENV === "production") {
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL environment variable is required in production.");
+  }
+  connectionString = process.env.DATABASE_URL;
+} else {
+  // In non-production environments (development and testing), allow falling back to DIRECT_URL if DATABASE_URL is missing.
+  connectionString = process.env.DATABASE_URL || process.env.DIRECT_URL || "";
+  if (!connectionString) {
+    console.warn("⚠️ Warning: Neither DATABASE_URL nor DIRECT_URL environment variables are defined.");
+  }
+}
 
 let prisma: PrismaClient;
 
