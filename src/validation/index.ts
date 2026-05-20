@@ -20,7 +20,6 @@ export function formatZodError(error: z.ZodError): ValidationErrorDetail[] {
   }));
 }
 
-
 export function createValidationErrorResponse(error: z.ZodError) {
   return {
     error: {
@@ -30,6 +29,37 @@ export function createValidationErrorResponse(error: z.ZodError) {
     },
   };
 }
+
+// Strict Date Validation Schema (YYYY-MM-DD)
+// Accepts a YYYY-MM-DD string, parses to Date in UTC, and validates calendar math correctness.
+export const strictDateSchema = z.preprocess((val) => {
+  if (val instanceof Date) {
+    return val.toISOString().split("T")[0];
+  }
+  return val;
+}, z
+  .string({ message: "Date is required" })
+  .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Invalid date format (must be YYYY-MM-DD)" })
+  .transform((val, ctx) => {
+    const [yearStr, monthStr, dayStr] = val.split("-");
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10);
+    const day = parseInt(dayStr, 10);
+
+    const date = new Date(Date.UTC(year, month - 1, day));
+    if (
+      date.getUTCFullYear() !== year ||
+      date.getUTCMonth() !== month - 1 ||
+      date.getUTCDate() !== day
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Invalid calendar date",
+      });
+      return z.NEVER;
+    }
+    return date;
+  }));
 
 // 1. Tag Schema
 export const createTagSchema = z.object({
@@ -42,10 +72,9 @@ export const createTagSchema = z.object({
   }),
 });
 
+// 2. WorkLog Schemas
 export const createWorkLogSchema = z.object({
-  date: z.coerce.date({
-    message: "Invalid date format",
-  }),
+  date: strictDateSchema,
   title: z
     .string({ message: "Title is required" })
     .trim()
@@ -75,21 +104,25 @@ export const createWorkLogSchema = z.object({
 
 export const updateWorkLogSchema = createWorkLogSchema.partial();
 
+// 3. WeeklyReview Schema
 export const weeklyReviewSchema = z
   .object({
-    weekStart: z.coerce.date({
-      message: "Invalid week start date format",
-    }),
-    weekEnd: z.coerce.date({
-      message: "Invalid week end date format",
-    }),
+    weekStart: strictDateSchema,
+    weekEnd: strictDateSchema,
     shipped: z.string().trim().optional().nullable(),
     blockers: z.string().trim().optional().nullable(),
     learned: z.string().trim().optional().nullable(),
     collaboration: z.string().trim().optional().nullable(),
     nextFocus: z.string().trim().optional().nullable(),
   })
-  .refine((data) => data.weekStart <= data.weekEnd, {
+  .refine((data) => {
+    // If either date is invalid, they will not be valid Date objects.
+    // Safe check: make sure they are both valid dates.
+    if (!(data.weekStart instanceof Date) || !(data.weekEnd instanceof Date)) {
+      return false;
+    }
+    return data.weekStart <= data.weekEnd;
+  }, {
     message: "Week start date must not be after week end date",
     path: ["weekStart"],
   });
@@ -122,7 +155,7 @@ export const exportRequestSchema = z.object({
   type: z.enum(EXPORT_TYPES, {
     message: "Invalid export type",
   }),
-  weekStart: z.coerce.date().optional(),
-  weekEnd: z.coerce.date().optional(),
+  weekStart: strictDateSchema.optional(),
+  weekEnd: strictDateSchema.optional(),
   tagIds: z.array(z.string().uuid("Invalid tag ID format")).optional(),
 });

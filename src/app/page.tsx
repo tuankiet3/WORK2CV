@@ -152,7 +152,7 @@ export default function Dashboard() {
         <div className="lg:col-span-2 space-y-8">
           {/* Recent Highlights Widget */}
           <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-zinc-150 dark:border-zinc-800 flex items-center justify-between">
+            <div className="px-6 py-5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
                   Recent Highlights
@@ -248,7 +248,7 @@ export default function Dashboard() {
                 {taskTypes.map((type) => (
                   <div key={type.name} className="flex items-center justify-between text-xs">
                     <span className="text-zinc-500 dark:text-zinc-400 font-medium">{type.name}</span>
-                    <span className="font-bold text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-850 px-2 py-0.5 rounded">
+                    <span className="font-bold text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">
                       {type.count} {type.count === 1 ? "log" : "logs"}
                     </span>
                   </div>
@@ -322,7 +322,7 @@ export default function Dashboard() {
                       <Copy className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                  <p className="text-xs text-zinc-650 dark:text-zinc-300 mt-2.5 leading-relaxed font-mono select-all">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-300 mt-2.5 leading-relaxed font-mono select-all">
                     &bull; {bullet.content}
                   </p>
                 </div>

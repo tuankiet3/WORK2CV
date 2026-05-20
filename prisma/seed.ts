@@ -13,6 +13,13 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  if (process.env.ALLOW_DESTRUCTIVE_SEED !== "true") {
+    console.error("⚠️  SAFETY GUARD: Seed execution stopped.");
+    console.error("This script resets existing database records. To proceed, run the script with ALLOW_DESTRUCTIVE_SEED=true.");
+    console.error("Example: ALLOW_DESTRUCTIVE_SEED=true npx prisma db seed");
+    process.exit(1);
+  }
+
   console.log("🌱 Starting seed database run...");
 
   // 1. Clean existing records in dependency order

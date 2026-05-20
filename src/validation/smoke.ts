@@ -67,6 +67,54 @@ runTest(
 );
 
 runTest(
+  "WorkLog: Invalid date (2026-02-31)",
+  createWorkLogSchema,
+  {
+    date: "2026-02-31",
+    title: "Testing invalid calendar date",
+    taskType: "testing",
+    impactLevel: "implemented",
+  },
+  false
+);
+
+runTest(
+  "WorkLog: Invalid date (2026-13-01)",
+  createWorkLogSchema,
+  {
+    date: "2026-13-01",
+    title: "Testing invalid calendar date",
+    taskType: "testing",
+    impactLevel: "implemented",
+  },
+  false
+);
+
+runTest(
+  "WorkLog: Invalid date (abc)",
+  createWorkLogSchema,
+  {
+    date: "abc",
+    title: "Testing invalid calendar date",
+    taskType: "testing",
+    impactLevel: "implemented",
+  },
+  false
+);
+
+runTest(
+  "WorkLog: Invalid date (empty string)",
+  createWorkLogSchema,
+  {
+    date: "",
+    title: "Testing invalid calendar date",
+    taskType: "testing",
+    impactLevel: "implemented",
+  },
+  false
+);
+
+runTest(
   "WorkLog: Invalid task type error",
   createWorkLogSchema,
   {
