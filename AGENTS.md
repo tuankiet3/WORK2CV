@@ -35,4 +35,6 @@ Operational rules:
 - Always refer to `docs/DEPLOYMENT.md` and `docs/CI-CD.md` before making configuration or infrastructure changes.
 - The Vercel project has already been created manually and connected to GitHub; verify the existing integration instead of creating a duplicate project.
 - Never commit or push files under the `docs/` directory to GitHub (they must remain local only).
+- Commit and push directly to the `main` branch; do not create or switch to other branches.
+
 
