@@ -23,6 +23,10 @@
 # documentation
 /docs
 
+# agent configuration
+/AGENTS.md
+
+
 # misc
 .DS_Store
 *.pem
