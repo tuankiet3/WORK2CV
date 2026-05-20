@@ -12,4 +12,72 @@ datasource db {
   provider = "postgresql"
 }
 
+model WorkLog {
+  id          String       @id @default(uuid())
+  date        DateTime     @db.Date
+  title       String
+  description String?
+  taskType    String // onboarding, feature, bugfix, refactor, code_review, etc.
+  impactLevel String // learned, assisted, implemented, reviewed, fixed, improved
+  problem     String?
+  solution    String?
+  learning    String?
+  links       String[] // PostgreSQL string array
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  tags        WorkLogTag[]
 
+  @@index([date])
+  @@index([taskType])
+  @@index([impactLevel])
+}
+
+model Tag {
+  id        String       @id @default(uuid())
+  name      String
+  category  String // tech, domain, skill, tool
+  createdAt DateTime     @default(now())
+  workLogs  WorkLogTag[]
+
+  @@unique([name, category])
+  @@index([category])
+  @@index([name])
+}
+
+model WorkLogTag {
+  workLogId String
+  tagId     String
+  workLog   WorkLog @relation(fields: [workLogId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([workLogId, tagId])
+  @@index([workLogId])
+  @@index([tagId])
+}
+
+model WeeklyReview {
+  id            String   @id @default(uuid())
+  weekStart     DateTime @db.Date
+  weekEnd       DateTime @db.Date
+  shipped       String?
+  blockers      String?
+  learned       String?
+  collaboration String?
+  nextFocus     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([weekStart, weekEnd])
+  @@index([weekStart])
+}
+
+model CvBullet {
+  id           String   @id @default(uuid())
+  sourceLogIds String[] // IDs of work logs used as source
+  content      String
+  tone         String // concise_cv, detailed_cv, internship_report
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tone])
+}
