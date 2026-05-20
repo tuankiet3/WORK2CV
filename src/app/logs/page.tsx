@@ -6,7 +6,9 @@ import {
   FileText, 
   Plus, 
   Link as LinkIcon, 
-  Calendar 
+  Calendar,
+  Search,
+  X
 } from "lucide-react";
 import TaskTypeBadge from "@/components/TaskTypeBadge";
 import ImpactBadge from "@/components/ImpactBadge";
@@ -14,7 +16,17 @@ import TagBadge from "@/components/TagBadge";
 import LoadingState from "@/components/LoadingState";
 import EmptyState from "@/components/EmptyState";
 import ErrorState from "@/components/ErrorState";
-import { type TaskType, type ImpactLevel, type TagCategory } from "@/constants";
+import { 
+  type TaskType, 
+  type ImpactLevel, 
+  type TagCategory,
+  TASK_TYPES,
+  IMPACT_LEVELS,
+  TASK_TYPE_LABELS,
+  IMPACT_LEVEL_LABELS,
+  TAG_CATEGORIES,
+  TAG_CATEGORY_LABELS
+} from "@/constants";
 
 interface Tag {
   id: string;
@@ -29,6 +41,9 @@ interface WorkLog {
   description: string | null;
   taskType: TaskType;
   impactLevel: ImpactLevel;
+  problem?: string | null;
+  solution?: string | null;
+  learning?: string | null;
   links: string[];
   tags: Tag[];
 }
@@ -51,6 +66,25 @@ export default function LogsPage() {
   const [logs, setLogs] = useState<WorkLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Hydration status
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
+
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedTagId, setSelectedTagId] = useState<string>("");
+  const [selectedTagCategory, setSelectedTagCategory] = useState<string>("");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [selectedTaskTypes, setSelectedTaskTypes] = useState<TaskType[]>([]);
+  const [selectedImpactLevels, setSelectedImpactLevels] = useState<ImpactLevel[]>([]);
+  const [problemSolutionOnly, setProblemSolutionOnly] = useState<boolean>(false);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+
+  // Derived state: Date error
+  const dateError = dateFrom && dateTo && dateFrom > dateTo
+    ? "From Date must be before or equal to To Date"
+    : null;
 
   const fetchLogs = useCallback(async () => {
     // Force async execution of state updates to prevent synchronous setState in useEffect
@@ -75,10 +109,174 @@ export default function LogsPage() {
     }
   }, []);
 
+  // Parse URL search parameters on mount
   useEffect(() => {
+    const initFromUrl = async () => {
+      await Promise.resolve();
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get("q") || "";
+      const tagId = params.get("tagId") || "";
+      const tagCategory = params.get("tagCategory") || "";
+      const from = params.get("from") || "";
+      const to = params.get("to") || "";
+      const tTypes = params.get("taskTypes") ? params.get("taskTypes")!.split(",") : [];
+      const iLevels = params.get("impactLevels") ? params.get("impactLevels")!.split(",") : [];
+      const psOnly = params.get("problemSolutionOnly") === "true";
+
+      setSearchQuery(q);
+      setSelectedTagId(tagId);
+      setSelectedTagCategory(tagCategory);
+      setDateFrom(from);
+      setDateTo(to);
+      setSelectedTaskTypes(tTypes as TaskType[]);
+      setSelectedImpactLevels(iLevels as ImpactLevel[]);
+      setProblemSolutionOnly(psOnly);
+      setIsInitialized(true);
+    };
+
+    initFromUrl();
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchLogs();
+
+    // Fetch tags
+    const fetchTags = async () => {
+      try {
+        const res = await fetch("/api/tags");
+        if (res.ok) {
+          const json = await res.json();
+          setAvailableTags(json.data || []);
+        }
+      } catch (err) {
+        console.error("Error fetching tags:", err);
+      }
+    };
+    fetchTags();
   }, [fetchLogs]);
+
+  // Synchronize state changes to URL query parameters
+  useEffect(() => {
+    if (!isInitialized) return; // Guard so that default states don't overwrite deep links on first render!
+
+    const params = new URLSearchParams();
+    if (searchQuery) params.set("q", searchQuery);
+    if (selectedTagId) params.set("tagId", selectedTagId);
+    if (selectedTagCategory) params.set("tagCategory", selectedTagCategory);
+    if (dateFrom) params.set("from", dateFrom);
+    if (dateTo) params.set("to", dateTo);
+    if (selectedTaskTypes.length > 0) params.set("taskTypes", selectedTaskTypes.join(","));
+    if (selectedImpactLevels.length > 0) params.set("impactLevels", selectedImpactLevels.join(","));
+    if (problemSolutionOnly) params.set("problemSolutionOnly", "true");
+
+    const newSearch = params.toString();
+    const currentSearch = window.location.search.replace(/^\?/, "");
+    if (newSearch !== currentSearch) {
+      const newUrl = `${window.location.pathname}${newSearch ? "?" + newSearch : ""}`;
+      window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, "", newUrl);
+    }
+  }, [isInitialized, searchQuery, selectedTagId, selectedTagCategory, dateFrom, dateTo, selectedTaskTypes, selectedImpactLevels, problemSolutionOnly]);
+
+  const handleTaskTypeToggle = (type: TaskType) => {
+    setSelectedTaskTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
+  };
+
+  const handleImpactLevelToggle = (level: ImpactLevel) => {
+    setSelectedImpactLevels((prev) =>
+      prev.includes(level) ? prev.filter((l) => l !== level) : [...prev, level]
+    );
+  };
+
+  const handleTagCategoryChange = (category: string) => {
+    setSelectedTagCategory(category);
+    // If a specific tag was selected but does not belong to the newly selected category, clear it.
+    if (category && selectedTagId) {
+      const currentTag = availableTags.find((t) => t.id === selectedTagId);
+      if (currentTag && currentTag.category !== category) {
+        setSelectedTagId("");
+      }
+    }
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedTagId("");
+    setSelectedTagCategory("");
+    setDateFrom("");
+    setDateTo("");
+    setSelectedTaskTypes([]);
+    setSelectedImpactLevels([]);
+    setProblemSolutionOnly(false);
+  };
+
+  const hasActiveFilters =
+    searchQuery !== "" ||
+    selectedTagId !== "" ||
+    selectedTagCategory !== "" ||
+    dateFrom !== "" ||
+    dateTo !== "" ||
+    selectedTaskTypes.length > 0 ||
+    selectedImpactLevels.length > 0 ||
+    problemSolutionOnly;
+
+  // Sync available tag list based on selected category
+  const displayedTags = selectedTagCategory
+    ? availableTags.filter((t) => t.category === selectedTagCategory)
+    : availableTags;
+
+  // Filter logs client-side
+  const filteredLogs = logs.filter((log) => {
+    // 1. Text search
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchTitle = log.title.toLowerCase().includes(q);
+      const matchDesc = log.description ? log.description.toLowerCase().includes(q) : false;
+      const matchProblem = log.problem ? log.problem.toLowerCase().includes(q) : false;
+      const matchSolution = log.solution ? log.solution.toLowerCase().includes(q) : false;
+      const matchLearning = log.learning ? log.learning.toLowerCase().includes(q) : false;
+      if (!matchTitle && !matchDesc && !matchProblem && !matchSolution && !matchLearning) {
+        return false;
+      }
+    }
+
+    // 2. Tag filter
+    if (selectedTagId) {
+      const hasTag = log.tags.some((t) => t.id === selectedTagId);
+      if (!hasTag) return false;
+    }
+
+    // 2b. Tag category filter
+    if (selectedTagCategory) {
+      const hasCategory = log.tags.some((t) => t.category === selectedTagCategory);
+      if (!hasCategory) return false;
+    }
+
+    // 3. Date range filter
+    if (dateFrom && dateTo && dateFrom > dateTo) {
+      return false; // Invalid range yields no match
+    }
+    if (dateFrom && log.date < dateFrom) return false;
+    if (dateTo && log.date > dateTo) return false;
+
+    // 4. Task type filter
+    if (selectedTaskTypes.length > 0 && !selectedTaskTypes.includes(log.taskType)) {
+      return false;
+    }
+
+    // 5. Impact level filter
+    if (selectedImpactLevels.length > 0 && !selectedImpactLevels.includes(log.impactLevel)) {
+      return false;
+    }
+
+    // 6. Problem-Solution only filter
+    if (problemSolutionOnly) {
+      const hasProblem = log.problem !== null && log.problem !== undefined && log.problem.trim() !== "";
+      const hasSolution = log.solution !== null && log.solution !== undefined && log.solution.trim() !== "";
+      if (!hasProblem || !hasSolution) return false;
+    }
+
+    return true;
+  });
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -103,6 +301,174 @@ export default function LogsPage() {
         </div>
       </div>
 
+      {/* Filter Panel */}
+      <div className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 space-y-4 shadow-sm">
+        {/* Row 1: Search, Tag Category, Tag, Date range */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div>
+            <label htmlFor="search" className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
+              Search Logs
+            </label>
+            <div className="relative">
+              <input
+                id="search"
+                type="text"
+                placeholder="Search title, details, learnings..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full text-sm pl-9 pr-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-transparent text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-zinc-400" />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="category-filter" className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
+              Tag Category
+            </label>
+            <select
+              id="category-filter"
+              value={selectedTagCategory}
+              onChange={(e) => handleTagCategoryChange(e.target.value)}
+              className="w-full text-sm px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 text-zinc-950 dark:text-zinc-50 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">All Categories</option>
+              {TAG_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {TAG_CATEGORY_LABELS[cat]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="tag-filter" className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
+              Filter by Tag
+            </label>
+            <select
+              id="tag-filter"
+              value={selectedTagId}
+              onChange={(e) => setSelectedTagId(e.target.value)}
+              className="w-full text-sm px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 text-zinc-950 dark:text-zinc-50 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">All Tags</option>
+              {displayedTags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name} ({tag.category})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="date-from" className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
+              From Date
+            </label>
+            <input
+              id="date-from"
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="w-full text-sm px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-transparent text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="date-to" className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
+              To Date
+            </label>
+            <input
+              id="date-to"
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="w-full text-sm px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-transparent text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
+        </div>
+
+        {/* Row 2: Multi-select Checkboxes */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-3 border-t border-zinc-100 dark:border-zinc-800/60">
+          <div>
+            <span className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
+              Task Types
+            </span>
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              {TASK_TYPES.map((type) => {
+                const isChecked = selectedTaskTypes.includes(type);
+                return (
+                  <label key={type} className="inline-flex items-center text-xs font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => handleTaskTypeToggle(type)}
+                      className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500 mr-2"
+                    />
+                    {TASK_TYPE_LABELS[type]}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <span className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
+              Impact Levels
+            </span>
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              {IMPACT_LEVELS.map((level) => {
+                const isChecked = selectedImpactLevels.includes(level);
+                return (
+                  <label key={level} className="inline-flex items-center text-xs font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => handleImpactLevelToggle(level)}
+                      className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500 mr-2"
+                    />
+                    {IMPACT_LEVEL_LABELS[level]}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 3: Action Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
+          <div>
+            {dateError ? (
+              <span className="text-xs text-red-500 dark:text-red-400 font-medium">
+                ⚠️ {dateError}
+              </span>
+            ) : (
+              <label className="inline-flex items-center text-xs font-semibold text-zinc-700 dark:text-zinc-300 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={problemSolutionOnly}
+                  onChange={() => setProblemSolutionOnly(!problemSolutionOnly)}
+                  className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500 mr-2"
+                />
+                Problem-Solution Notes Only
+              </label>
+            )}
+          </div>
+          <div className="flex items-center gap-3 justify-end">
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors cursor-pointer"
+              >
+                <X className="h-3.5 w-3.5" />
+                Clear Filters
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Main Content Area */}
       {isLoading ? (
         <LoadingState rows={4} />
@@ -116,11 +482,29 @@ export default function LogsPage() {
           actionHref="/logs/new"
           icon={FileText}
         />
+      ) : filteredLogs.length === 0 ? (
+        <div className="text-center py-12 bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl p-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 mb-4">
+            <Search className="h-6 w-6" />
+          </div>
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+            No Matching Work Logs
+          </h3>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto mb-6">
+            We couldn&apos;t find any work logs matching your selected filters. Try adjusting your search query, dates, or tags.
+          </p>
+          <button
+            onClick={clearFilters}
+            className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-zinc-700 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors cursor-pointer"
+          >
+            Clear All Filters
+          </button>
+        </div>
       ) : (
         <div className="space-y-6">
           {/* Mobile view: Stacked Cards */}
           <div className="block md:hidden space-y-4">
-            {logs.map((log) => (
+            {filteredLogs.map((log) => (
               <div 
                 key={log.id} 
                 className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-5 shadow-xs transition-all duration-200"
@@ -173,7 +557,7 @@ export default function LogsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800 bg-transparent">
-                  {logs.map((log) => (
+                  {filteredLogs.map((log) => (
                     <tr 
                       key={log.id}
                       className="transition-colors duration-150"
