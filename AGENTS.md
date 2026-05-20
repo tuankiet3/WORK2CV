@@ -1,4 +1,4 @@
-﻿<!-- BEGIN:nextjs-agent-rules -->
+<!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
@@ -33,4 +33,6 @@ Operational rules:
 - Never commit secrets, credentials, or tokens (Vercel, Database, GitHub).
 - Do not use SQLite or local PostgreSQL for Work2CV persistence; use Supabase hosted database for local, preview, and production.
 - Always refer to `docs/DEPLOYMENT.md` and `docs/CI-CD.md` before making configuration or infrastructure changes.
+- The Vercel project has already been created manually and connected to GitHub; verify the existing integration instead of creating a duplicate project.
+- Never commit or push files under the `docs/` directory to GitHub (they must remain local only).
 
