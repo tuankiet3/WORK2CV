@@ -7,7 +7,7 @@ export default function NewLogPage() {
       <div className="flex items-center gap-3">
         <Link
           href="/logs"
-          className="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-155 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-900 transition-colors"
+          className="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-900 transition-colors"
           title="Back to logs"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -23,7 +23,7 @@ export default function NewLogPage() {
       </div>
 
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-12 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-900 text-zinc-450">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-900 text-zinc-400">
           <PlusCircle className="h-6 w-6" />
         </div>
         <h3 className="mt-4 text-sm font-semibold text-zinc-900 dark:text-zinc-200">
@@ -33,7 +33,7 @@ export default function NewLogPage() {
           The daily log editor form, featuring tag auto-complete and multi-link inputs, will be fully implemented in Sprint 2 alongside API route handlers.
         </p>
         <div className="mt-6 flex justify-center gap-3">
-          <div className="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-50 dark:bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-150 dark:border-zinc-800">
+          <div className="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-50 dark:bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800">
             <AlertCircle className="h-4 w-4 text-indigo-500" />
             <span>CRUD implementation planned for Sprint 2.</span>
           </div>

@@ -25,7 +25,7 @@ export default function LogsPage() {
       </div>
 
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-12 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-900 text-zinc-450">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-900 text-zinc-400">
           <FileText className="h-6 w-6" />
         </div>
         <h3 className="mt-4 text-sm font-semibold text-zinc-900 dark:text-zinc-200">
@@ -35,7 +35,7 @@ export default function LogsPage() {
           Database synchronization is currently being set up. Soon, you will be able to search and filter your logs by date range, task type, impact level, and technology tags.
         </p>
         <div className="mt-6 flex justify-center gap-3">
-          <div className="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-50 dark:bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-150 dark:border-zinc-800">
+          <div className="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-50 dark:bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800">
             <AlertCircle className="h-4 w-4 text-indigo-500" />
             <span>Database schema will be initialized in Sprint 1.</span>
           </div>
