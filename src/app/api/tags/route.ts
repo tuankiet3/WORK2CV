@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 import { createTagSchema, createValidationErrorResponse } from "@/validation";
 
 export async function GET() {
@@ -68,15 +69,37 @@ export async function POST(request: NextRequest) {
       return Response.json({ data: existingTag }, { status: 200 });
     }
 
-    // Create the new tag
-    const newTag = await prisma.tag.create({
-      data: {
-        name,
-        category,
-      },
-    });
+    // Create the new tag with race-condition safety
+    try {
+      const newTag = await prisma.tag.create({
+        data: {
+          name,
+          category,
+        },
+      });
 
-    return Response.json({ data: newTag }, { status: 201 });
+      return Response.json({ data: newTag }, { status: 201 });
+    } catch (createError: unknown) {
+      // Catch duplicate key race conditions (Prisma error code P2002)
+      if (
+        createError instanceof Prisma.PrismaClientKnownRequestError &&
+        createError.code === "P2002"
+      ) {
+        const raceExistingTag = await prisma.tag.findFirst({
+          where: {
+            name: {
+              equals: name,
+              mode: "insensitive",
+            },
+            category,
+          },
+        });
+        if (raceExistingTag) {
+          return Response.json({ data: raceExistingTag }, { status: 200 });
+        }
+      }
+      throw createError; // Re-throw other database or system errors
+    }
   } catch (error: unknown) {
     console.error("POST /api/tags error:", error);
     return Response.json(
@@ -90,3 +113,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
