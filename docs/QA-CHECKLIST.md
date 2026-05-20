@@ -1,4 +1,4 @@
-﻿# Work2CV QA Checklist
+# Work2CV QA Checklist
 
 ## Purpose
 
@@ -206,25 +206,26 @@ Use this checklist before marking a sprint task or MVP flow as complete. If a ch
 
 ## Deployment Readiness
 
-- [ ] `.github/workflows/ci.yml` exists.
-- [ ] CI workflow runs on pull requests to `main`.
-- [ ] CI workflow runs on pushes to `main`.
-- [ ] CI workflow uses `npm ci`.
-- [ ] CI workflow runs `npm run lint`.
-- [ ] CI workflow runs `npm run build`.
-- [ ] `docs/DEPLOYMENT.md` exists.
-- [ ] `docs/CI-CD.md` exists.
-- [ ] `.env.example` documents required variables without secrets.
-- [ ] Vercel project settings are documented.
-- [ ] Root route can be smoke-tested locally.
-- [ ] Supabase database strategy is documented before implementing CRUD features.
-- [ ] SQLite is not used for Work2CV persistence.
-- [ ] Local PostgreSQL is not required for Work2CV persistence.
-- [ ] Supabase is documented as the database for local, preview, and production.
-- [ ] `.env` exists locally with Supabase placeholders or real local values.
-- [ ] Vercel has matching Supabase environment variables before deploy.
-- [ ] No Vercel token is committed.
-- [ ] No database credential is committed.
-- [ ] No GitHub token is committed.
+- [x] `.github/workflows/ci.yml` exists.
+- [x] CI workflow runs on pull requests to `main`.
+- [x] CI workflow runs on pushes to `main`.
+- [x] CI workflow uses `npm ci`.
+- [x] CI workflow runs `npm run lint`.
+- [x] CI workflow runs `npm run build`.
+- [x] `docs/DEPLOYMENT.md` exists.
+- [x] `docs/CI-CD.md` exists.
+- [x] `.env.example` documents required variables without secrets.
+- [x] Vercel project settings are documented.
+- [x] Root route can be smoke-tested locally.
+- [x] Supabase database strategy is documented before implementing CRUD features.
+- [x] SQLite is not used for Work2CV persistence.
+- [x] Local PostgreSQL is not required for Work2CV persistence.
+- [x] Supabase is documented as the database for local, preview, and production.
+- [x] `.env` exists locally with Supabase placeholders or real local values.
+- [x] Vercel has matching Supabase environment variables before deploy.
+- [x] No Vercel token is committed.
+- [x] No database credential is committed.
+- [x] No GitHub token is committed.
+
 
 
