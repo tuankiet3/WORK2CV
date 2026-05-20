@@ -2,6 +2,8 @@ import { type NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createWorkLogSchema, createValidationErrorResponse, strictDateSchema } from "@/validation";
 import { Prisma } from "@/generated/prisma/client";
+import { z } from "zod";
+import { TASK_TYPES, IMPACT_LEVELS } from "@/constants";
 
 interface LogTagWithTag {
   tag: {
@@ -97,6 +99,43 @@ export async function GET(request: NextRequest) {
         });
       }
       toDate = result.data;
+    }
+
+    if (taskType !== null && taskType !== "") {
+      const result = z.object({
+        taskType: z.enum(TASK_TYPES, {
+          message: "Invalid task type",
+        }),
+      }).safeParse({ taskType });
+      if (!result.success) {
+        return Response.json(createValidationErrorResponse(result.error), {
+          status: 400,
+        });
+      }
+    }
+
+    if (impactLevel !== null && impactLevel !== "") {
+      const result = z.object({
+        impactLevel: z.enum(IMPACT_LEVELS, {
+          message: "Invalid impact level",
+        }),
+      }).safeParse({ impactLevel });
+      if (!result.success) {
+        return Response.json(createValidationErrorResponse(result.error), {
+          status: 400,
+        });
+      }
+    }
+
+    if (tagId !== null && tagId !== "") {
+      const result = z.object({
+        tagId: z.string().uuid({ message: "Invalid tag ID format" }),
+      }).safeParse({ tagId });
+      if (!result.success) {
+        return Response.json(createValidationErrorResponse(result.error), {
+          status: 400,
+        });
+      }
     }
 
     if (fromDate || toDate) {

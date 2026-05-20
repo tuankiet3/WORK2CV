@@ -474,6 +474,57 @@ async function main() {
     return { success: true, message: `Returned 400 with BAD_REQUEST.` };
   });
 
+  // 13.9 GET: Invalid taskType query parameter
+  await runTest("GET: Invalid taskType query parameter (taskType=not_real)", async () => {
+    const req = new NextRequest("http://localhost/api/logs?taskType=not_real");
+    const res = await GET(req);
+    const data = await res.json();
+
+    if (res.status !== 400) {
+      return { success: false, message: `Expected status 400, got ${res.status}` };
+    }
+
+    if (data.error?.code !== "VALIDATION_ERROR") {
+      return { success: false, message: `Expected VALIDATION_ERROR, got: ${JSON.stringify(data)}` };
+    }
+
+    return { success: true, message: `Returned 400 with VALIDATION_ERROR.` };
+  });
+
+  // 13.10 GET: Invalid impactLevel query parameter
+  await runTest("GET: Invalid impactLevel query parameter (impactLevel=not_real)", async () => {
+    const req = new NextRequest("http://localhost/api/logs?impactLevel=not_real");
+    const res = await GET(req);
+    const data = await res.json();
+
+    if (res.status !== 400) {
+      return { success: false, message: `Expected status 400, got ${res.status}` };
+    }
+
+    if (data.error?.code !== "VALIDATION_ERROR") {
+      return { success: false, message: `Expected VALIDATION_ERROR, got: ${JSON.stringify(data)}` };
+    }
+
+    return { success: true, message: `Returned 400 with VALIDATION_ERROR.` };
+  });
+
+  // 13.11 GET: Invalid tagId query parameter
+  await runTest("GET: Invalid tagId query parameter (tagId=not-a-uuid)", async () => {
+    const req = new NextRequest("http://localhost/api/logs?tagId=not-a-uuid");
+    const res = await GET(req);
+    const data = await res.json();
+
+    if (res.status !== 400) {
+      return { success: false, message: `Expected status 400, got ${res.status}` };
+    }
+
+    if (data.error?.code !== "VALIDATION_ERROR") {
+      return { success: false, message: `Expected VALIDATION_ERROR, got: ${JSON.stringify(data)}` };
+    }
+
+    return { success: true, message: `Returned 400 with VALIDATION_ERROR.` };
+  });
+
   // 14. DELETE /[id]: Successful delete and relation cascade check
   await runTest("DELETE /[id]: Successful delete and join table cascade check", async () => {
     const res = await DELETE(new Request(`http://localhost/api/logs/${createdLogId}`), {
