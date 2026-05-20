@@ -118,7 +118,20 @@ export async function PATCH(
       });
     }
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return Response.json(
+        {
+          error: {
+            code: "BAD_REQUEST",
+            message: "Invalid JSON body.",
+          },
+        },
+        { status: 400 }
+      );
+    }
     const updateResult = updateWorkLogSchema.safeParse(body);
 
     if (!updateResult.success) {

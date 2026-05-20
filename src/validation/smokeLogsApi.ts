@@ -331,6 +331,149 @@ async function main() {
     return { success: true, message: `Not found returned successfully.` };
   });
 
+  // 13.1 GET: Filter logs by problemSolutionOnly
+  await runTest("GET: Filter logs by problemSolutionOnly", async () => {
+    const req = new NextRequest("http://localhost/api/logs?problemSolutionOnly=true");
+    const res = await GET(req);
+    const data = await res.json();
+
+    if (res.status !== 200) {
+      return { success: false, message: `Expected status 200, got ${res.status}` };
+    }
+
+    const invalid = data.data.filter((l: { problem?: string; solution?: string }) => !l.problem || !l.solution);
+    if (invalid.length > 0) {
+      return { success: false, message: `Returned logs without problem/solution: ${JSON.stringify(invalid)}` };
+    }
+
+    return { success: true, message: `Filtered problemSolutionOnly successfully.` };
+  });
+
+  // 13.2 GET: Invalid from date format (abc)
+  await runTest("GET: Invalid from date (from=abc)", async () => {
+    const req = new NextRequest("http://localhost/api/logs?from=abc");
+    const res = await GET(req);
+    const data = await res.json();
+
+    if (res.status !== 400) {
+      return { success: false, message: `Expected status 400, got ${res.status}` };
+    }
+
+    if (data.error?.code !== "VALIDATION_ERROR") {
+      return { success: false, message: `Expected VALIDATION_ERROR, got: ${JSON.stringify(data)}` };
+    }
+
+    return { success: true, message: `Returned 400 with VALIDATION_ERROR.` };
+  });
+
+  // 13.3 GET: Invalid from calendar date (2026-13-01)
+  await runTest("GET: Invalid from calendar date (from=2026-13-01)", async () => {
+    const req = new NextRequest("http://localhost/api/logs?from=2026-13-01");
+    const res = await GET(req);
+    const data = await res.json();
+
+    if (res.status !== 400) {
+      return { success: false, message: `Expected status 400, got ${res.status}` };
+    }
+
+    if (data.error?.code !== "VALIDATION_ERROR") {
+      return { success: false, message: `Expected VALIDATION_ERROR, got: ${JSON.stringify(data)}` };
+    }
+
+    return { success: true, message: `Returned 400 with VALIDATION_ERROR.` };
+  });
+
+  // 13.4 GET: Invalid to calendar date (2026-02-31)
+  await runTest("GET: Invalid to calendar date (to=2026-02-31)", async () => {
+    const req = new NextRequest("http://localhost/api/logs?to=2026-02-31");
+    const res = await GET(req);
+    const data = await res.json();
+
+    if (res.status !== 400) {
+      return { success: false, message: `Expected status 400, got ${res.status}` };
+    }
+
+    if (data.error?.code !== "VALIDATION_ERROR") {
+      return { success: false, message: `Expected VALIDATION_ERROR, got: ${JSON.stringify(data)}` };
+    }
+
+    return { success: true, message: `Returned 400 with VALIDATION_ERROR.` };
+  });
+
+  // 13.5 GET: Empty from/to date (from=)
+  await runTest("GET: Empty from/to dates (from=)", async () => {
+    const req = new NextRequest("http://localhost/api/logs?from=");
+    const res = await GET(req);
+    const data = await res.json();
+
+    if (res.status !== 400) {
+      return { success: false, message: `Expected status 400, got ${res.status}` };
+    }
+
+    if (data.error?.code !== "VALIDATION_ERROR") {
+      return { success: false, message: `Expected VALIDATION_ERROR, got: ${JSON.stringify(data)}` };
+    }
+
+    return { success: true, message: `Returned 400 with VALIDATION_ERROR.` };
+  });
+
+  // 13.6 GET: Valid range succeeds
+  await runTest("GET: Valid range succeeds (from=2026-05-01&to=2026-05-31)", async () => {
+    const req = new NextRequest("http://localhost/api/logs?from=2026-05-01&to=2026-05-31");
+    const res = await GET(req);
+
+    if (res.status !== 200) {
+      return { success: false, message: `Expected status 200, got ${res.status}` };
+    }
+
+    return { success: true, message: `Returned 200 successfully.` };
+  });
+
+  // 13.7 POST: Malformed JSON
+  await runTest("POST: Malformed JSON", async () => {
+    const req = new NextRequest("http://localhost/api/logs", {
+      method: "POST",
+      body: "not-valid-json{",
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+
+    if (res.status !== 400) {
+      return { success: false, message: `Expected status 400, got ${res.status}` };
+    }
+
+    if (data.error?.code !== "BAD_REQUEST") {
+      return { success: false, message: `Expected BAD_REQUEST, got: ${JSON.stringify(data)}` };
+    }
+
+    return { success: true, message: `Returned 400 with BAD_REQUEST.` };
+  });
+
+  // 13.8 PATCH: Malformed JSON
+  await runTest("PATCH: Malformed JSON", async () => {
+    const res = await PATCH(
+      new Request(`http://localhost/api/logs/${createdLogId}`, {
+        method: "PATCH",
+        body: "not-valid-json{",
+      }),
+      {
+        params: Promise.resolve({ id: createdLogId }),
+      }
+    );
+    const data = await res.json();
+
+    if (res.status !== 400) {
+      return { success: false, message: `Expected status 400, got ${res.status}` };
+    }
+
+    if (data.error?.code !== "BAD_REQUEST") {
+      return { success: false, message: `Expected BAD_REQUEST, got: ${JSON.stringify(data)}` };
+    }
+
+    return { success: true, message: `Returned 400 with BAD_REQUEST.` };
+  });
+
   // 14. DELETE /[id]: Successful delete and relation cascade check
   await runTest("DELETE /[id]: Successful delete and join table cascade check", async () => {
     const res = await DELETE(new Request(`http://localhost/api/logs/${createdLogId}`), {

@@ -1,6 +1,6 @@
 import { type NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createWorkLogSchema, createValidationErrorResponse } from "@/validation";
+import { createWorkLogSchema, createValidationErrorResponse, strictDateSchema } from "@/validation";
 import { Prisma } from "@/generated/prisma/client";
 
 interface LogTagWithTag {
@@ -55,8 +55,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
     const q = searchParams.get("q");
-    const from = searchParams.get("from");
-    const to = searchParams.get("to");
+    const fromVal = searchParams.get("from");
+    const toVal = searchParams.get("to");
     const taskType = searchParams.get("taskType");
     const impactLevel = searchParams.get("impactLevel");
     const tagId = searchParams.get("tagId");
@@ -76,13 +76,36 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    if (from || to) {
-      const dateCondition: Prisma.DateTimeFilter = {};
-      if (from) {
-        dateCondition.gte = new Date(from);
+    let fromDate: Date | undefined;
+    let toDate: Date | undefined;
+
+    if (fromVal !== null) {
+      const result = strictDateSchema.safeParse(fromVal);
+      if (!result.success) {
+        return Response.json(createValidationErrorResponse(result.error), {
+          status: 400,
+        });
       }
-      if (to) {
-        dateCondition.lte = new Date(to);
+      fromDate = result.data;
+    }
+
+    if (toVal !== null) {
+      const result = strictDateSchema.safeParse(toVal);
+      if (!result.success) {
+        return Response.json(createValidationErrorResponse(result.error), {
+          status: 400,
+        });
+      }
+      toDate = result.data;
+    }
+
+    if (fromDate || toDate) {
+      const dateCondition: Prisma.DateTimeFilter = {};
+      if (fromDate) {
+        dateCondition.gte = fromDate;
+      }
+      if (toDate) {
+        dateCondition.lte = toDate;
       }
       andConditions.push({ date: dateCondition });
     }
@@ -107,10 +130,16 @@ export async function GET(request: NextRequest) {
 
     if (problemSolutionOnly === "true") {
       andConditions.push({
-        problem: { not: null, not: "" },
+        problem: { not: null },
       });
       andConditions.push({
-        solution: { not: null, not: "" },
+        problem: { not: "" },
+      });
+      andConditions.push({
+        solution: { not: null },
+      });
+      andConditions.push({
+        solution: { not: "" },
       });
     }
 
@@ -149,7 +178,20 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return Response.json(
+        {
+          error: {
+            code: "BAD_REQUEST",
+            message: "Invalid JSON body.",
+          },
+        },
+        { status: 400 }
+      );
+    }
     const result = createWorkLogSchema.safeParse(body);
 
     if (!result.success) {
