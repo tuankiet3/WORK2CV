@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
       - name: Checkout repository
@@ -22,6 +24,13 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Verify CI environment
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::DATABASE_URL repository secret is required for the production Next.js build."
+            exit 1
+          fi
 
       - name: Run ESLint
         run: npm run lint
