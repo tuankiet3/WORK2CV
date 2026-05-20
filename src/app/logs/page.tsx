@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { 
   FileText, 
   Plus, 
@@ -63,6 +64,7 @@ function formatDate(dateStr: string) {
 }
 
 export default function LogsPage() {
+  const router = useRouter();
   const [logs, setLogs] = useState<WorkLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -505,9 +507,10 @@ export default function LogsPage() {
           {/* Mobile view: Stacked Cards */}
           <div className="block md:hidden space-y-4">
             {filteredLogs.map((log) => (
-              <div 
+              <Link 
                 key={log.id} 
-                className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-5 shadow-xs transition-all duration-200"
+                href={`/logs/${log.id}`}
+                className="block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-5 shadow-xs transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer active:scale-[0.99] select-none"
               >
                 <div className="flex items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400 mb-2.5">
                   <span className="font-medium flex items-center gap-1.5">
@@ -522,7 +525,7 @@ export default function LogsPage() {
                   )}
                 </div>
                 
-                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-base">
+                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-base hover:text-indigo-600 dark:hover:text-indigo-400">
                   {log.title}
                 </h3>
                 
@@ -538,7 +541,7 @@ export default function LogsPage() {
                     ))}
                   </div>
                 )}
-              </div>
+              </Link>
             ))}
           </div>
 
@@ -560,15 +563,23 @@ export default function LogsPage() {
                   {filteredLogs.map((log) => (
                     <tr 
                       key={log.id}
-                      className="transition-colors duration-150"
+                      onClick={(e) => {
+                        const target = e.target as HTMLElement;
+                        if (target.closest("a") || target.closest("button") || target.closest("span[onClick]")) return;
+                        router.push(`/logs/${log.id}`);
+                      }}
+                      className="transition-colors duration-150 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/10 cursor-pointer"
                     >
                       <td className="whitespace-nowrap px-6 py-4 text-zinc-500 dark:text-zinc-400 font-medium">
                         {formatDate(log.date)}
                       </td>
                       <td className="px-6 py-4">
-                        <span className="font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2">
+                        <Link 
+                          href={`/logs/${log.id}`}
+                          className="font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline cursor-pointer"
+                        >
                           {log.title}
-                        </span>
+                        </Link>
                       </td>
                       <td className="whitespace-nowrap px-6 py-4">
                         <TaskTypeBadge type={log.taskType} />
