@@ -66,7 +66,8 @@ export const createTagSchema = z.object({
   name: z
     .string({ message: "Tag name is required" })
     .trim()
-    .min(1, "Tag name must not be empty"),
+    .min(1, "Tag name must not be empty")
+    .max(50, "Tag name must be 50 characters or less"),
   category: z.enum(TAG_CATEGORIES, {
     message: "Invalid tag category",
   }),
