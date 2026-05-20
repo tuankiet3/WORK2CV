@@ -6,7 +6,6 @@ import {
   FileText, 
   Plus, 
   Link as LinkIcon, 
-  ChevronRight, 
   Calendar 
 } from "lucide-react";
 import TaskTypeBadge from "@/components/TaskTypeBadge";
@@ -15,7 +14,6 @@ import TagBadge from "@/components/TagBadge";
 import LoadingState from "@/components/LoadingState";
 import EmptyState from "@/components/EmptyState";
 import ErrorState from "@/components/ErrorState";
-import { useRouter } from "next/navigation";
 import { type TaskType, type ImpactLevel, type TagCategory } from "@/constants";
 
 interface Tag {
@@ -50,7 +48,6 @@ function formatDate(dateStr: string) {
 }
 
 export default function LogsPage() {
-  const router = useRouter();
   const [logs, setLogs] = useState<WorkLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,7 +95,7 @@ export default function LogsPage() {
         <div>
           <Link
             href="/logs/new"
-            className="inline-flex items-center justify-center gap-2 px-4.5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 rounded-lg shadow-md hover:shadow-indigo-200 dark:hover:shadow-none transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 rounded-lg shadow-md hover:shadow-indigo-200 dark:hover:shadow-none transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             Add Work Log
@@ -124,10 +121,9 @@ export default function LogsPage() {
           {/* Mobile view: Stacked Cards */}
           <div className="block md:hidden space-y-4">
             {logs.map((log) => (
-              <Link 
+              <div 
                 key={log.id} 
-                href={`/logs/${log.id}`}
-                className="block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-5 shadow-xs hover:shadow-md hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 group active:scale-[0.99]"
+                className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-5 shadow-xs transition-all duration-200"
               >
                 <div className="flex items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400 mb-2.5">
                   <span className="font-medium flex items-center gap-1.5">
@@ -135,14 +131,14 @@ export default function LogsPage() {
                     {formatDate(log.date)}
                   </span>
                   {log.links && log.links.length > 0 && (
-                    <span className="inline-flex items-center gap-1 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-100 dark:border-zinc-800 px-2 py-0.5 rounded text-xs">
+                    <span className="inline-flex items-center gap-1 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 px-2 py-0.5 rounded text-xs">
                       <LinkIcon className="h-3 w-3" />
                       {log.links.length}
                     </span>
                   )}
                 </div>
                 
-                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-base group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-base">
                   {log.title}
                 </h3>
                 
@@ -152,13 +148,13 @@ export default function LogsPage() {
                 </div>
 
                 {log.tags && log.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-3.5 pt-3 border-t border-zinc-100 dark:border-zinc-850">
+                  <div className="flex flex-wrap gap-1.5 mt-3.5 pt-3 border-t border-zinc-100 dark:border-zinc-800">
                     {log.tags.map((t) => (
                       <TagBadge key={t.id} name={t.name} category={t.category} />
                     ))}
                   </div>
                 )}
-              </Link>
+              </div>
             ))}
           </div>
 
@@ -174,23 +170,19 @@ export default function LogsPage() {
                     <th scope="col" className="px-6 py-4 font-medium">Impact</th>
                     <th scope="col" className="px-6 py-4 font-medium">Tags</th>
                     <th scope="col" className="px-6 py-4 font-medium text-center">Links</th>
-                    <th scope="col" className="relative px-6 py-4"><span className="sr-only">Actions</span></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800 bg-transparent">
                   {logs.map((log) => (
                     <tr 
                       key={log.id}
-                      className="hover:bg-zinc-50/55 dark:hover:bg-zinc-900/30 transition-colors duration-150 group cursor-pointer"
-                      onClick={() => {
-                        router.push(`/logs/${log.id}`);
-                      }}
+                      className="transition-colors duration-150"
                     >
-                      <td className="whitespace-nowrap px-6 py-4 text-zinc-550 dark:text-zinc-400 font-medium">
+                      <td className="whitespace-nowrap px-6 py-4 text-zinc-500 dark:text-zinc-400 font-medium">
                         {formatDate(log.date)}
                       </td>
                       <td className="px-6 py-4">
-                        <span className="font-semibold text-zinc-900 dark:text-zinc-150 group-hover:text-indigo-650 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
+                        <span className="font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2">
                           {log.title}
                         </span>
                       </td>
@@ -207,22 +199,19 @@ export default function LogsPage() {
                               <TagBadge key={t.id} name={t.name} category={t.category} />
                             ))
                           ) : (
-                            <span className="text-xs text-zinc-450 dark:text-zinc-500 italic">No tags</span>
+                            <span className="text-xs text-zinc-400 dark:text-zinc-500 italic">No tags</span>
                           )}
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-center">
                         {log.links && log.links.length > 0 ? (
-                          <span className="inline-flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-350 border border-zinc-200 dark:border-zinc-700 px-2.5 py-0.5 rounded-full text-xs font-semibold">
-                            <LinkIcon className="h-3 w-3 text-zinc-450 dark:text-zinc-500" />
+                          <span className="inline-flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                            <LinkIcon className="h-3 w-3 text-zinc-400 dark:text-zinc-500" />
                             {log.links.length}
                           </span>
                         ) : (
                           <span className="text-xs text-zinc-400 dark:text-zinc-500">-</span>
                         )}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-right text-zinc-400 dark:text-zinc-500">
-                        <ChevronRight className="h-5 w-5 inline-block opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-150 text-indigo-500" />
                       </td>
                     </tr>
                   ))}
