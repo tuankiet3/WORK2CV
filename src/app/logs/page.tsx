@@ -23,7 +23,9 @@ import {
   TASK_TYPES,
   IMPACT_LEVELS,
   TASK_TYPE_LABELS,
-  IMPACT_LEVEL_LABELS
+  IMPACT_LEVEL_LABELS,
+  TAG_CATEGORIES,
+  TAG_CATEGORY_LABELS
 } from "@/constants";
 
 interface Tag {
@@ -65,9 +67,13 @@ export default function LogsPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Hydration status
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
+
   // Filter states
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedTagId, setSelectedTagId] = useState<string>("");
+  const [selectedTagCategory, setSelectedTagCategory] = useState<string>("");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [selectedTaskTypes, setSelectedTaskTypes] = useState<TaskType[]>([]);
@@ -110,6 +116,7 @@ export default function LogsPage() {
       const params = new URLSearchParams(window.location.search);
       const q = params.get("q") || "";
       const tagId = params.get("tagId") || "";
+      const tagCategory = params.get("tagCategory") || "";
       const from = params.get("from") || "";
       const to = params.get("to") || "";
       const tTypes = params.get("taskTypes") ? params.get("taskTypes")!.split(",") : [];
@@ -118,11 +125,13 @@ export default function LogsPage() {
 
       setSearchQuery(q);
       setSelectedTagId(tagId);
+      setSelectedTagCategory(tagCategory);
       setDateFrom(from);
       setDateTo(to);
       setSelectedTaskTypes(tTypes as TaskType[]);
       setSelectedImpactLevels(iLevels as ImpactLevel[]);
       setProblemSolutionOnly(psOnly);
+      setIsInitialized(true);
     };
 
     initFromUrl();
@@ -146,9 +155,12 @@ export default function LogsPage() {
 
   // Synchronize state changes to URL query parameters
   useEffect(() => {
+    if (!isInitialized) return; // Guard so that default states don't overwrite deep links on first render!
+
     const params = new URLSearchParams();
     if (searchQuery) params.set("q", searchQuery);
     if (selectedTagId) params.set("tagId", selectedTagId);
+    if (selectedTagCategory) params.set("tagCategory", selectedTagCategory);
     if (dateFrom) params.set("from", dateFrom);
     if (dateTo) params.set("to", dateTo);
     if (selectedTaskTypes.length > 0) params.set("taskTypes", selectedTaskTypes.join(","));
@@ -161,7 +173,7 @@ export default function LogsPage() {
       const newUrl = `${window.location.pathname}${newSearch ? "?" + newSearch : ""}`;
       window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, "", newUrl);
     }
-  }, [searchQuery, selectedTagId, dateFrom, dateTo, selectedTaskTypes, selectedImpactLevels, problemSolutionOnly]);
+  }, [isInitialized, searchQuery, selectedTagId, selectedTagCategory, dateFrom, dateTo, selectedTaskTypes, selectedImpactLevels, problemSolutionOnly]);
 
   const handleTaskTypeToggle = (type: TaskType) => {
     setSelectedTaskTypes((prev) =>
@@ -175,9 +187,21 @@ export default function LogsPage() {
     );
   };
 
+  const handleTagCategoryChange = (category: string) => {
+    setSelectedTagCategory(category);
+    // If a specific tag was selected but does not belong to the newly selected category, clear it.
+    if (category && selectedTagId) {
+      const currentTag = availableTags.find((t) => t.id === selectedTagId);
+      if (currentTag && currentTag.category !== category) {
+        setSelectedTagId("");
+      }
+    }
+  };
+
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedTagId("");
+    setSelectedTagCategory("");
     setDateFrom("");
     setDateTo("");
     setSelectedTaskTypes([]);
@@ -188,11 +212,17 @@ export default function LogsPage() {
   const hasActiveFilters =
     searchQuery !== "" ||
     selectedTagId !== "" ||
+    selectedTagCategory !== "" ||
     dateFrom !== "" ||
     dateTo !== "" ||
     selectedTaskTypes.length > 0 ||
     selectedImpactLevels.length > 0 ||
     problemSolutionOnly;
+
+  // Sync available tag list based on selected category
+  const displayedTags = selectedTagCategory
+    ? availableTags.filter((t) => t.category === selectedTagCategory)
+    : availableTags;
 
   // Filter logs client-side
   const filteredLogs = logs.filter((log) => {
@@ -213,6 +243,12 @@ export default function LogsPage() {
     if (selectedTagId) {
       const hasTag = log.tags.some((t) => t.id === selectedTagId);
       if (!hasTag) return false;
+    }
+
+    // 2b. Tag category filter
+    if (selectedTagCategory) {
+      const hasCategory = log.tags.some((t) => t.category === selectedTagCategory);
+      if (!hasCategory) return false;
     }
 
     // 3. Date range filter
@@ -266,9 +302,9 @@ export default function LogsPage() {
       </div>
 
       {/* Filter Panel */}
-      <div className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 space-y-4 shadow-2xs">
-        {/* Row 1: Search, Tag, Date range */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 space-y-4 shadow-sm">
+        {/* Row 1: Search, Tag Category, Tag, Date range */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <div>
             <label htmlFor="search" className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
               Search Logs
@@ -289,6 +325,25 @@ export default function LogsPage() {
           </div>
 
           <div>
+            <label htmlFor="category-filter" className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
+              Tag Category
+            </label>
+            <select
+              id="category-filter"
+              value={selectedTagCategory}
+              onChange={(e) => handleTagCategoryChange(e.target.value)}
+              className="w-full text-sm px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 text-zinc-950 dark:text-zinc-50 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">All Categories</option>
+              {TAG_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {TAG_CATEGORY_LABELS[cat]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label htmlFor="tag-filter" className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
               Filter by Tag
             </label>
@@ -299,7 +354,7 @@ export default function LogsPage() {
               className="w-full text-sm px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 text-zinc-950 dark:text-zinc-50 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
             >
               <option value="">All Tags</option>
-              {availableTags.map((tag) => (
+              {displayedTags.map((tag) => (
                 <option key={tag.id} value={tag.id}>
                   {tag.name} ({tag.category})
                 </option>
@@ -349,7 +404,7 @@ export default function LogsPage() {
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => handleTaskTypeToggle(type)}
-                      className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-zinc-700 text-indigo-650 focus:ring-indigo-500 mr-2"
+                      className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500 mr-2"
                     />
                     {TASK_TYPE_LABELS[type]}
                   </label>
@@ -371,7 +426,7 @@ export default function LogsPage() {
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => handleImpactLevelToggle(level)}
-                      className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-zinc-700 text-indigo-650 focus:ring-indigo-500 mr-2"
+                      className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500 mr-2"
                     />
                     {IMPACT_LEVEL_LABELS[level]}
                   </label>
@@ -394,7 +449,7 @@ export default function LogsPage() {
                   type="checkbox"
                   checked={problemSolutionOnly}
                   onChange={() => setProblemSolutionOnly(!problemSolutionOnly)}
-                  className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-zinc-700 text-indigo-650 focus:ring-indigo-500 mr-2"
+                  className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500 mr-2"
                 />
                 Problem-Solution Notes Only
               </label>
@@ -440,7 +495,7 @@ export default function LogsPage() {
           </p>
           <button
             onClick={clearFilters}
-            className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-zinc-700 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-750 rounded-lg transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-zinc-700 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors cursor-pointer"
           >
             Clear All Filters
           </button>
