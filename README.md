@@ -2,16 +2,6 @@
 
 Work2CV is a local-first internship work log dashboard for a developer intern. It helps record daily work, track technical learning, create weekly reflections, and convert real internship activity into CV-ready bullet points.
 
-## Project Status
-
-The project is currently in planning and setup. The implementation should follow:
-
-1. `docs/RULE.md`
-2. `docs/PLAN.md`
-3. `docs/ProductBacklog.md`
-4. `docs/SprintBacklog.md`
-5. `docs/PHASE-PROMPT.md`
-
 Any agent working on this project must read `docs/RULE.md` before starting a task.
 
 ## Tech Stack
@@ -104,53 +94,6 @@ Run seed after it exists:
 npx prisma db seed
 ```
 
-## Required Agent Workflow
-
-For every implementation task:
-
-1. Read `docs/RULE.md`, `docs/PLAN.md`, `docs/ProductBacklog.md`, and `docs/SprintBacklog.md`.
-2. Identify the matching PB and SB task IDs.
-3. Inspect the codebase before editing.
-4. Write a short task-level implementation plan.
-5. Implement the task immediately in the same turn.
-6. Test API behavior if data/API logic is touched.
-7. Test UI behavior if pages/components/forms are touched.
-8. Test relevant exception cases.
-9. Run relevant checks and relevant `docs/QA-CHECKLIST.md` items.
-10. Report changed files, tests, checklist coverage, skipped checks, and remaining risks.
-
-## Documentation Map
-
-- `docs/RULE.md`: mandatory agent operating rules
-- `docs/PLAN.md`: project implementation plan
-- `docs/ProductBacklog.md`: epics, stories, acceptance criteria
-- `docs/SprintBacklog.md`: sprint-by-sprint implementation tasks
-- `docs/PHASE-PROMPT.md`: copy-paste prompts for each sprint task
-- `docs/CONVENTIONS.md`: coding, API, UI, validation, and naming rules
-- `docs/API-SPEC.md`: endpoint contract and error format
-- `docs/DATA-MODEL.md`: data entities, fields, enums, and relations
-- `docs/SUPABASE.md`: Supabase env, Prisma connection, and security setup
-- `docs/UI-SPEC.md`: pages, layout, states, and component behavior
-- `docs/QA-CHECKLIST.md`: manual QA checklist for MVP verification
-- `docs/DEPLOYMENT.md`: free deploy plan, Vercel setup, and database deployment notes
-- `docs/CI-CD.md`: GitHub Actions and release workflow expectations
-
-## MVP Definition of Done
-
-The MVP is complete when:
-
-- Work log CRUD works.
-- Tags can be created and reused.
-- Dashboard stats use real data.
-- Weekly reviews can be created and prefilled.
-- CV bullets can be generated offline.
-- Saved bullets can be edited.
-- Markdown export works.
-- Empty states are clear.
-- Validation errors are clear.
-- `npm run lint` passes.
-- `npm run build` passes.
-
 ## Deployment Recommendation
 
 Recommended free deployment path:
@@ -162,6 +105,5 @@ Recommended free deployment path:
 
 Do not use SQLite or local PostgreSQL for Work2CV persistence. Local development, preview, and production should all use Supabase hosted database.
 
-See `docs/SUPABASE.md` before implementing any database task.
 
 
