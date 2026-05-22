@@ -189,7 +189,10 @@ export default function LogForm({
         if (prev.some((t) => t.id === createdTag.id)) return prev;
         return [...prev, createdTag];
       });
-      setSelectedTagIds((prev) => [...prev, createdTag.id]);
+      setSelectedTagIds((prev) => {
+        if (prev.includes(createdTag.id)) return prev;
+        return [...prev, createdTag.id];
+      });
       setNewTagName("");
     } catch (err: unknown) {
       setTagCreationError(err instanceof Error ? err.message : "Error creating tag");
@@ -244,7 +247,7 @@ export default function LogForm({
       solution: solution.trim() || null,
       learning: learning.trim() || null,
       links: links.map((l) => l.trim()).filter(Boolean),
-      tagIds: selectedTagIds,
+      tagIds: Array.from(new Set(selectedTagIds)),
     };
 
     await onSubmit(payload);
@@ -395,7 +398,7 @@ export default function LogForm({
                     className="p-2 border border-zinc-200 dark:border-zinc-800 rounded-md text-zinc-400 hover:text-red-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer"
                     title="Remove link"
                   >
-                    <Trash2 className="h-4.5 w-4.5" />
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 )}
               </div>

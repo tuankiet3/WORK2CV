@@ -198,6 +198,18 @@ export default function LogDetailPage({ params }: { params: Promise<{ id: string
     );
   }
 
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <ErrorState
+          title="Failed to load work log"
+          description={error}
+          onRetry={fetchLog}
+        />
+      </div>
+    );
+  }
+
   if (isNotFound || !log) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -207,18 +219,6 @@ export default function LogDetailPage({ params }: { params: Promise<{ id: string
           actionLabel="Back to Logs"
           actionHref="/logs"
           icon={AlertCircle}
-        />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <ErrorState
-          title="Failed to load work log"
-          description={error}
-          onRetry={fetchLog}
         />
       </div>
     );
