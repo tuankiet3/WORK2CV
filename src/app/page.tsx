@@ -140,6 +140,7 @@ async function DashboardContent() {
           },
         },
         where: {
+          category: "tech",
           workLogs: {
             some: {},
           },
@@ -560,20 +561,37 @@ async function DashboardContent() {
             </div>
 
             {topTags.length > 0 ? (
-              <div className="space-y-3.5 mt-5">
-                {topTags.map((tag, idx) => (
-                  <div key={tag.name} className="flex items-center justify-between group">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 w-4">
-                        #{idx + 1}
-                      </span>
-                      <TagBadge name={tag.name} category={tag.category} />
+              <div className="space-y-4 mt-5">
+                {topTags.map((tag, idx) => {
+                  const maxCount = topTags[0]?.count || 1;
+                  const barPercent = Math.round((tag.count / maxCount) * 100);
+
+                  return (
+                    <div key={tag.name} className="space-y-1.5 group">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 w-4 shrink-0">
+                            #{idx + 1}
+                          </span>
+                          <TagBadge
+                            name={tag.name}
+                            category={tag.category}
+                            className="truncate max-w-[120px] sm:max-w-[150px]"
+                          />
+                        </div>
+                        <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors shrink-0">
+                          {tag.count} {tag.count === 1 ? "log" : "logs"}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800/80 rounded-full overflow-hidden">
+                        <div
+                          style={{ width: `${barPercent}%` }}
+                          className="h-full bg-indigo-600 dark:bg-indigo-500 rounded-full transition-all duration-500 group-hover:bg-indigo-500 dark:group-hover:bg-indigo-400"
+                        />
+                      </div>
                     </div>
-                    <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                      {tag.count} {tag.count === 1 ? "log" : "logs"}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-10 text-center">
@@ -582,7 +600,7 @@ async function DashboardContent() {
                 </div>
                 <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-200">No technologies tagged</h3>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-xs">
-                  Add tags like React, TypeScript, or Docker to your work logs.
+                  Add tags like React, TypeScript, or Next.js to your work logs.
                 </p>
               </div>
             )}
