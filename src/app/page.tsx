@@ -393,9 +393,11 @@ async function DashboardContent() {
                         <ImpactBadge impact={log.impact} />
                       </div>
                     </div>
-                    <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mt-2 flex items-center gap-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                      {log.title}
-                      <ChevronRight className="h-4 w-4 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                    <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mt-2 transition-colors">
+                      <Link href={`/logs/${log.id}`} className="hover:underline inline-flex items-center gap-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                        {log.title}
+                        <ChevronRight className="h-4 w-4 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                      </Link>
                     </h3>
                     {log.desc && (
                       <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1.5 leading-relaxed">
@@ -423,7 +425,7 @@ async function DashboardContent() {
                 </div>
                 <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-200">No highlights yet</h3>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-xs">
-                  Logs with implemented, reviewed, fixed, or improved impact levels will automatically appear here.
+                  {"Create a work log with 'Implemented', 'Fixed', or 'Improved' impact to see it featured here."}
                 </p>
                 <Link
                   href="/logs/new"
