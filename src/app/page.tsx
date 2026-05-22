@@ -68,7 +68,7 @@ async function DashboardContent() {
     tags: Array<{ name: string; category: TagCategory }>;
   }> = [];
   let topTags: Array<{ name: string; count: number; category: TagCategory }> = [];
-  let taskTypes: Array<{ name: string; percentage: number; count: number; color: string }> = [];
+  let taskTypes: Array<{ name: string; type: TaskType; percentage: number; count: number; color: string }> = [];
   let impactTypes: Array<{ name: string; percentage: number; count: number; color: string }> = [];
   let cvBullets: Array<{ id: string; content: string; tone: string }> = [];
   let hasError = false;
@@ -220,6 +220,7 @@ async function DashboardContent() {
 
         return {
           name: label,
+          type: item.taskType as TaskType,
           percentage,
           count: item._count._all,
           color,
@@ -436,7 +437,7 @@ async function DashboardContent() {
           </div>
 
           {/* Work & Impact Distribution Widget */}
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 shadow-sm p-6 space-y-6">
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 shadow-sm p-6 space-y-6 min-h-[380px] flex flex-col">
             <div>
               <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
                 Work & Impact Distribution
@@ -447,7 +448,7 @@ async function DashboardContent() {
             </div>
 
             {totalLogs > 0 ? (
-              <div className="space-y-6">
+              <div className="space-y-6 flex-1 flex flex-col justify-between">
                 {/* Task Type Distribution */}
                 <div>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-3">
@@ -465,12 +466,12 @@ async function DashboardContent() {
                           />
                         ))}
                       </div>
-                      <div className="flex flex-wrap gap-x-4 gap-y-2">
+                      <div className="flex flex-wrap gap-x-3 gap-y-2">
                         {taskTypes.map((type) => (
-                          <div key={type.name} className="flex items-center gap-2">
-                            <span className={`h-2.5 w-2.5 rounded-full ${type.color}`}></span>
+                          <div key={type.name} className="flex items-center gap-1.5">
+                            <TaskTypeBadge type={type.type} />
                             <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                              {type.name} ({type.percentage}%)
+                              ({type.percentage}%)
                             </span>
                           </div>
                         ))}
@@ -480,7 +481,7 @@ async function DashboardContent() {
                     <div className="space-y-3 border-t sm:border-t-0 sm:border-l border-zinc-100 dark:border-zinc-800 pt-4 sm:pt-0 sm:pl-6">
                       {taskTypes.map((type) => (
                         <div key={type.name} className="flex items-center justify-between text-xs">
-                          <span className="text-zinc-500 dark:text-zinc-400 font-medium">{type.name}</span>
+                          <TaskTypeBadge type={type.type} />
                           <span className="font-bold text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">
                             {type.count} {type.count === 1 ? "log" : "logs"}
                           </span>
@@ -533,7 +534,7 @@ async function DashboardContent() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-10 text-center">
+              <div className="flex-1 flex flex-col items-center justify-center py-10 text-center">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-900 text-zinc-400 border border-zinc-100 dark:border-zinc-800 mb-3">
                   <TrendingUp className="h-5 w-5" />
                 </div>
@@ -734,7 +735,7 @@ function DashboardSkeleton() {
           </div>
 
           {/* Work Distribution Skeleton */}
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-6 space-y-6 animate-pulse">
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-6 space-y-6 animate-pulse min-h-[380px] flex flex-col">
             <div className="space-y-2">
               <div className="h-5 w-52 bg-zinc-200 dark:bg-zinc-800 rounded" />
               <div className="h-3.5 w-72 bg-zinc-200 dark:bg-zinc-800 rounded" />
