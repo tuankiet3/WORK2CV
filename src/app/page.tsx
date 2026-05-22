@@ -1,3 +1,4 @@
+import React, { Suspense } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -14,6 +15,7 @@ import ImpactBadge from "@/components/ImpactBadge";
 import TagBadge from "@/components/TagBadge";
 import ErrorState from "@/components/ErrorState";
 import CopyButton from "@/components/CopyButton";
+import SummaryCard from "@/components/SummaryCard";
 import {
   type TagCategory,
   type TaskType,
@@ -51,7 +53,7 @@ function getCurrentWeekBoundsUTC() {
   return { startOfWeek, endOfWeek };
 }
 
-export default async function Dashboard() {
+async function DashboardContent() {
   let totalLogs = 0;
   let logsThisWeek = 0;
   let savedCvBullets = 0;
@@ -338,33 +340,16 @@ export default async function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div
-              key={stat.name}
-              className="p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 shadow-sm hover:shadow-md transition-all duration-300 group"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                  {stat.name}
-                </span>
-                <div className={`p-2 rounded-lg ${stat.color} transition-transform duration-300 group-hover:scale-110`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-              </div>
-              <div className="mt-4">
-                <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-                  {stat.value}
-                </span>
-                <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500 mt-1 flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3 text-emerald-500" />
-                  {stat.change}
-                </p>
-              </div>
-            </div>
-          );
-        })}
+        {stats.map((stat) => (
+          <SummaryCard
+            key={stat.name}
+            name={stat.name}
+            value={stat.value}
+            change={stat.change}
+            icon={stat.icon}
+            colorClass={stat.color}
+          />
+        ))}
       </div>
 
       {/* Core Panels Grid */}
@@ -373,7 +358,7 @@ export default async function Dashboard() {
         <div className="lg:col-span-2 space-y-8">
 
           {/* Recent Highlights Widget */}
-          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 shadow-sm overflow-hidden">
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 shadow-sm overflow-hidden">
             <div className="px-6 py-5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
@@ -450,7 +435,7 @@ export default async function Dashboard() {
           </div>
 
           {/* Work & Impact Distribution Widget */}
-          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 shadow-sm p-6 space-y-6">
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 shadow-sm p-6 space-y-6">
             <div>
               <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
                 Work & Impact Distribution
@@ -564,7 +549,7 @@ export default async function Dashboard() {
         <div className="space-y-8">
 
           {/* Top Technologies Widget */}
-          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 shadow-sm p-6">
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 shadow-sm p-6">
             <div>
               <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
                 Top Technologies
@@ -604,7 +589,7 @@ export default async function Dashboard() {
           </div>
 
           {/* Saved CV Bullets Widget */}
-          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 shadow-sm overflow-hidden">
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
@@ -661,5 +646,148 @@ export default async function Dashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+function DashboardSkeleton() {
+  const skeletonStats = [
+    { name: "Total Work Logs", icon: FileText, color: "bg-zinc-100 dark:bg-zinc-900" },
+    { name: "Logs This Week", icon: Calendar, color: "bg-zinc-100 dark:bg-zinc-900" },
+    { name: "Top Tech", icon: Code, color: "bg-zinc-100 dark:bg-zinc-900" },
+    { name: "Saved CV Bullets", icon: CheckCircle2, color: "bg-zinc-100 dark:bg-zinc-900" },
+  ];
+
+  return (
+    <div className="space-y-8 max-w-7xl mx-auto">
+      {/* Header Section Skeleton */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-pulse">
+        <div className="space-y-2">
+          <div className="h-8 w-48 bg-zinc-200 dark:bg-zinc-800 rounded" />
+          <div className="h-4 w-96 bg-zinc-200 dark:bg-zinc-800 rounded" />
+        </div>
+        <div className="h-10 w-32 bg-zinc-200 dark:bg-zinc-800 rounded" />
+      </div>
+
+      {/* Stats Grid Skeleton */}
+      <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {skeletonStats.map((stat) => (
+          <SummaryCard
+            key={stat.name}
+            name={stat.name}
+            value=""
+            change=""
+            icon={stat.icon}
+            colorClass={stat.color}
+            loading={true}
+          />
+        ))}
+      </div>
+
+      {/* Core Panels Grid Skeleton */}
+      <div className="grid gap-8 grid-cols-1 lg:grid-cols-3">
+        {/* Left Columns - Logs & Tasks (Span 2) */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Highlights Widget Skeleton */}
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-6 space-y-6 animate-pulse">
+            <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-4">
+              <div className="space-y-2">
+                <div className="h-5 w-40 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                <div className="h-3.5 w-64 bg-zinc-200 dark:bg-zinc-800 rounded" />
+              </div>
+              <div className="h-4 w-20 bg-zinc-200 dark:bg-zinc-800 rounded" />
+            </div>
+            <div className="space-y-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="space-y-3 pt-2">
+                  <div className="flex gap-2">
+                    <div className="h-4 w-16 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                    <div className="h-4 w-20 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                    <div className="h-4 w-12 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                  </div>
+                  <div className="h-5 w-2/3 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                  <div className="h-4 w-full bg-zinc-200 dark:bg-zinc-800 rounded" />
+                  <div className="flex gap-1.5 pt-1">
+                    <div className="h-5 w-16 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                    <div className="h-5 w-16 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Work Distribution Skeleton */}
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-6 space-y-6 animate-pulse">
+            <div className="space-y-2">
+              <div className="h-5 w-52 bg-zinc-200 dark:bg-zinc-800 rounded" />
+              <div className="h-3.5 w-72 bg-zinc-200 dark:bg-zinc-800 rounded" />
+            </div>
+            <div className="space-y-4">
+              <div className="h-6 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full" />
+              <div className="flex flex-wrap gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="h-3 w-3 rounded-full bg-zinc-200 dark:bg-zinc-800" />
+                    <div className="h-4 w-24 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Tech Stack & CV Bullets */}
+        <div className="space-y-8">
+          {/* Top Technologies Skeleton */}
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-6 space-y-6 animate-pulse">
+            <div className="space-y-2">
+              <div className="h-5 w-36 bg-zinc-200 dark:bg-zinc-800 rounded" />
+              <div className="h-3.5 w-60 bg-zinc-200 dark:bg-zinc-800 rounded" />
+            </div>
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex justify-between items-center">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-4 w-4 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                    <div className="h-5 w-20 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                  </div>
+                  <div className="h-4 w-12 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* CV Bullets Skeleton */}
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-6 space-y-6 animate-pulse">
+            <div className="flex justify-between items-center">
+              <div className="space-y-2">
+                <div className="h-5 w-44 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                <div className="h-3.5 w-52 bg-zinc-200 dark:bg-zinc-800 rounded" />
+              </div>
+              <div className="h-4 w-24 bg-zinc-200 dark:bg-zinc-800 rounded" />
+            </div>
+            <div className="space-y-4">
+              {[1, 2].map((i) => (
+                <div key={i} className="space-y-2 border-t border-zinc-100 dark:border-zinc-800 pt-4">
+                  <div className="flex justify-between">
+                    <div className="h-4 w-12 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                    <div className="h-4 w-8 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                  </div>
+                  <div className="h-3.5 w-full bg-zinc-200 dark:bg-zinc-800 rounded" />
+                  <div className="h-3.5 w-5/6 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardContent />
+    </Suspense>
   );
 }
