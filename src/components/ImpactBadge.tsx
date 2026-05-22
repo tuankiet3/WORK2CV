@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 interface ImpactBadgeProps {
-  impact: ImpactLevel;
+  impact: ImpactLevel | string;
   className?: string;
 }
 
@@ -46,12 +46,12 @@ const config: Record<ImpactLevel, { icon: React.ComponentType<{ className?: stri
 };
 
 export default function ImpactBadge({ impact, className = "" }: ImpactBadgeProps) {
-  const badgeConfig = config[impact] || {
+  const badgeConfig = config[impact as ImpactLevel] || {
     icon: HelpCircle,
     classes: "bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-800",
   };
   const Icon = badgeConfig.icon;
-  const label = IMPACT_LEVEL_LABELS[impact] || impact;
+  const label = IMPACT_LEVEL_LABELS[impact as ImpactLevel] || impact;
 
   return (
     <span

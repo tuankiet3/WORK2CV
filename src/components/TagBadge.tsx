@@ -15,18 +15,18 @@ const colors: Record<TagCategory, string> = {
   tool: "bg-zinc-100 text-zinc-800 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700",
 };
 
-export default function TagBadge({ 
-  name, 
-  category, 
-  className = "", 
-  onClick 
+export default function TagBadge({
+  name,
+  category,
+  className = "",
+  onClick
 }: TagBadgeProps) {
-  const colorClasses = category 
-    ? colors[category] 
+  const colorClasses = (category && colors[category])
+    ? colors[category]
     : "bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-800";
 
-  const interactiveClasses = onClick 
-    ? "cursor-pointer hover:opacity-85 transition-opacity" 
+  const interactiveClasses = onClick
+    ? "cursor-pointer hover:opacity-85 transition-opacity"
     : "";
 
   return (

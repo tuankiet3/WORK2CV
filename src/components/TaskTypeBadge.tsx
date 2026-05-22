@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 interface TaskTypeBadgeProps {
-  type: TaskType;
+  type: TaskType | string;
   className?: string;
 }
 
@@ -66,12 +66,12 @@ const config: Record<TaskType, { icon: React.ComponentType<{ className?: string 
 };
 
 export default function TaskTypeBadge({ type, className = "" }: TaskTypeBadgeProps) {
-  const badgeConfig = config[type] || {
+  const badgeConfig = config[type as TaskType] || {
     icon: HelpCircle,
     classes: "bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-800",
   };
   const Icon = badgeConfig.icon;
-  const label = TASK_TYPE_LABELS[type] || type;
+  const label = TASK_TYPE_LABELS[type as TaskType] || type;
 
   return (
     <span
