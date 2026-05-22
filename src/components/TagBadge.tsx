@@ -21,7 +21,7 @@ export default function TagBadge({
   className = "", 
   onClick 
 }: TagBadgeProps) {
-  const colorClasses = category 
+  const colorClasses = (category && colors[category]) 
     ? colors[category] 
     : "bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-800";
 

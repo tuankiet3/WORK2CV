@@ -11,6 +11,10 @@ import {
   ChevronRight,
   TrendingUp,
 } from "lucide-react";
+import TaskTypeBadge from "@/components/TaskTypeBadge";
+import ImpactBadge from "@/components/ImpactBadge";
+import TagBadge from "@/components/TagBadge";
+import { type TagCategory } from "@/constants";
 
 // Mock data for high-fidelity preview
 const stats = [
@@ -178,12 +182,8 @@ export default function Dashboard() {
                         {log.date}
                       </span>
                       <span className="h-1 w-1 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
-                      <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
-                        {log.type}
-                      </span>
-                      <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400">
-                        {log.impact}
-                      </span>
+                      <TaskTypeBadge type={log.type.toLowerCase()} />
+                      <ImpactBadge impact={log.impact.toLowerCase()} />
                     </div>
                   </div>
                   <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mt-2 flex items-center gap-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
@@ -195,12 +195,10 @@ export default function Dashboard() {
                   </p>
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {log.tags.map((tag) => (
-                      <span
+                      <TagBadge
                         key={tag}
-                        className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-zinc-50 border border-zinc-200/60 dark:bg-zinc-900 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400"
-                      >
-                        #{tag}
-                      </span>
+                        name={`#${tag}`}
+                      />
                     ))}
                   </div>
                 </div>
@@ -277,9 +275,7 @@ export default function Dashboard() {
                     <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 w-4">
                       #{idx + 1}
                     </span>
-                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${tag.color}`}>
-                      {tag.name}
-                    </span>
+                    <TagBadge name={tag.name} category={tag.category.toLowerCase() as TagCategory} />
                   </div>
                   <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     {tag.count} logs
