@@ -362,7 +362,7 @@ export default function WeeklyPage() {
 
           {/* Column 1: Logs this week (Span 2) */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-150 dark:border-zinc-850 pb-2">
+            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-2">
               <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider flex items-center gap-2">
                 <FileText className="h-4 w-4 text-indigo-500" />
                 Logs this week ({logs.length})
@@ -432,7 +432,7 @@ export default function WeeklyPage() {
 
           {/* Column 2: Weekly Review Status & Form (Span 3) */}
           <div className="lg:col-span-3 space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-150 dark:border-zinc-850 pb-2">
+            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-2">
               <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-indigo-500" />
                 Reflection summary
@@ -612,7 +612,7 @@ export default function WeeklyPage() {
                         <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
                         Accomplishments
                       </h4>
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed pl-5.5 whitespace-pre-wrap">{review.shipped}</p>
+                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed pl-6 whitespace-pre-wrap">{review.shipped}</p>
                     </div>
                   )}
 
@@ -622,7 +622,7 @@ export default function WeeklyPage() {
                         <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
                         Blockers & Challenges
                       </h4>
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed pl-5.5 whitespace-pre-wrap">{review.blockers}</p>
+                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed pl-6 whitespace-pre-wrap">{review.blockers}</p>
                     </div>
                   )}
 
@@ -632,7 +632,7 @@ export default function WeeklyPage() {
                         <BookOpen className="h-4 w-4 text-indigo-500 shrink-0" />
                         Technical Lessons
                       </h4>
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed pl-5.5 whitespace-pre-wrap">{review.learned}</p>
+                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed pl-6 whitespace-pre-wrap">{review.learned}</p>
                     </div>
                   )}
 
@@ -642,7 +642,7 @@ export default function WeeklyPage() {
                         <Users className="h-4 w-4 text-fuchsia-500 shrink-0" />
                         Mentor & Team Collaboration
                       </h4>
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed pl-5.5 whitespace-pre-wrap">{review.collaboration}</p>
+                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed pl-6 whitespace-pre-wrap">{review.collaboration}</p>
                     </div>
                   )}
 
@@ -652,7 +652,7 @@ export default function WeeklyPage() {
                         <Compass className="h-4 w-4 text-sky-500 shrink-0" />
                         Next Week Focus
                       </h4>
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed pl-5.5 whitespace-pre-wrap">{review.nextFocus}</p>
+                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed pl-6 whitespace-pre-wrap">{review.nextFocus}</p>
                     </div>
                   )}
                 </div>
