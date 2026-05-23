@@ -518,12 +518,12 @@ export default function LogForm({
                 className="w-full text-xs px-2.5 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded bg-transparent text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
               />
               
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-2">
                 <select
                   value={newTagCategory}
                   onChange={(e) => setNewTagCategory(e.target.value as TagCategory)}
                   aria-label="New tag category"
-                  className="flex-grow text-xs px-2.5 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded bg-white dark:bg-zinc-900 text-zinc-950 dark:text-zinc-50 focus:outline-none"
+                  className="w-full sm:w-0 sm:flex-grow lg:w-full lg:flex-grow-0 xl:w-0 xl:flex-grow text-xs px-2.5 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded bg-white dark:bg-zinc-900 text-zinc-950 dark:text-zinc-50 focus:outline-none min-w-0"
                 >
                   {TAG_CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>
@@ -536,7 +536,7 @@ export default function LogForm({
                   type="button"
                   onClick={handleCreateTagSubmit}
                   disabled={isCreatingTag}
-                  className="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded disabled:opacity-50 flex items-center justify-center gap-1 cursor-pointer"
+                  className="w-full sm:w-auto lg:w-full xl:w-auto px-4 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded disabled:opacity-50 flex items-center justify-center gap-1 cursor-pointer flex-shrink-0"
                 >
                   {isCreatingTag ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />

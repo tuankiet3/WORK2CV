@@ -397,18 +397,20 @@ export default function LogsPage() {
             <span className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
               Task Types
             </span>
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
+            <div className="flex flex-wrap gap-1.5">
               {TASK_TYPES.map((type) => {
                 const isChecked = selectedTaskTypes.includes(type);
                 return (
-                  <label key={type} className="inline-flex items-center text-xs font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer select-none">
+                  <label key={type} className="relative cursor-pointer select-none">
                     <input
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => handleTaskTypeToggle(type)}
-                      className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500 mr-2"
+                      className="sr-only peer"
                     />
-                    {TASK_TYPE_LABELS[type]}
+                    <span className="inline-flex items-center justify-center px-2.5 py-1 text-xs font-medium rounded-full border border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/30 text-zinc-600 dark:text-zinc-400 peer-checked:bg-indigo-50 dark:peer-checked:bg-indigo-950/30 peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400 peer-checked:border-indigo-200 dark:peer-checked:border-indigo-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-200 transition-all duration-150 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-500 peer-focus-visible:ring-offset-1 dark:peer-focus-visible:ring-offset-zinc-950">
+                      {TASK_TYPE_LABELS[type]}
+                    </span>
                   </label>
                 );
               })}
@@ -419,18 +421,20 @@ export default function LogsPage() {
             <span className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
               Impact Levels
             </span>
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
+            <div className="flex flex-wrap gap-1.5">
               {IMPACT_LEVELS.map((level) => {
                 const isChecked = selectedImpactLevels.includes(level);
                 return (
-                  <label key={level} className="inline-flex items-center text-xs font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer select-none">
+                  <label key={level} className="relative cursor-pointer select-none">
                     <input
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => handleImpactLevelToggle(level)}
-                      className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500 mr-2"
+                      className="sr-only peer"
                     />
-                    {IMPACT_LEVEL_LABELS[level]}
+                    <span className="inline-flex items-center justify-center px-2.5 py-1 text-xs font-medium rounded-full border border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/30 text-zinc-600 dark:text-zinc-400 peer-checked:bg-indigo-50 dark:peer-checked:bg-indigo-950/30 peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400 peer-checked:border-indigo-200 dark:peer-checked:border-indigo-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-200 transition-all duration-150 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-500 peer-focus-visible:ring-offset-1 dark:peer-focus-visible:ring-offset-zinc-950">
+                      {IMPACT_LEVEL_LABELS[level]}
+                    </span>
                   </label>
                 );
               })}
