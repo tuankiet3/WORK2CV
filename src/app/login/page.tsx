@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Briefcase, Loader2, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { AuthError } from "@supabase/supabase-js";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,8 +14,37 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const mapLoginError = (error: AuthError | null): string => {
+    if (!error) return "An unexpected error occurred.";
+    const message = (error.message || "").toLowerCase();
+    const code = error.code || "";
+
+    if (
+      message.includes("invalid credentials") ||
+      message.includes("invalid login credentials") ||
+      code === "invalid_credentials"
+    ) {
+      return "Invalid email or password. Please check your credentials and try again.";
+    }
+
+    if (message.includes("email not confirmed") || code === "email_not_confirmed") {
+      return "Your email address has not been confirmed yet. Please check your inbox for the confirmation link.";
+    }
+
+    if (
+      message.includes("rate limit") ||
+      code === "over_email_send_rate_limit" ||
+      code === "over_request_rate_limit"
+    ) {
+      return "Too many login attempts. Please wait a few minutes before trying again.";
+    }
+
+    return error.message || "An unexpected error occurred.";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     setIsLoading(true);
     setErrorMsg(null);
 
@@ -32,13 +62,13 @@ export default function LoginPage() {
       });
 
       if (error) {
-        setErrorMsg(error.message);
+        setErrorMsg(mapLoginError(error));
       } else {
         router.push("/");
         router.refresh();
       }
-    } catch {
-      setErrorMsg("An unexpected error occurred. Please try again.");
+    } catch (err: unknown) {
+      setErrorMsg(mapLoginError(err as AuthError));
     } finally {
       setIsLoading(false);
     }
