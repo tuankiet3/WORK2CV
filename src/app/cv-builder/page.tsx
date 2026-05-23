@@ -443,8 +443,10 @@ export default function CvBuilderPage() {
               {/* Filters */}
               <div className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 shadow-sm space-y-3">
                 <div className="relative">
+                  <label htmlFor="cv-search" className="sr-only">Search logs by keyword</label>
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400 dark:text-zinc-500" />
                   <input
+                    id="cv-search"
                     type="text"
                     placeholder="Search logs by keyword..."
                     value={searchQuery}
@@ -506,8 +508,17 @@ export default function CvBuilderPage() {
                   return (
                     <div
                       key={log.id}
+                      role="checkbox"
+                      aria-checked={isSelected}
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === " " || e.key === "Enter") {
+                          e.preventDefault();
+                          handleToggleSelect(log.id);
+                        }
+                      }}
                       onClick={() => handleToggleSelect(log.id)}
-                      className={`group flex items-start gap-3 p-4 border rounded-xl transition-all shadow-xs cursor-pointer select-none relative ${
+                      className={`group flex items-start gap-3 p-4 border rounded-xl transition-all shadow-xs cursor-pointer select-none relative focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none ${
                         isSelected
                           ? "bg-indigo-50/20 dark:bg-indigo-950/10 border-indigo-500/80 dark:border-indigo-500/50"
                           : "bg-white dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
@@ -701,6 +712,7 @@ export default function CvBuilderPage() {
                           rows={3}
                           value={variant.content}
                           onChange={(e) => handleVariantTextChange(index, e.target.value)}
+                          aria-label={`Generated ${variant.label} Bullet`}
                           className="w-full text-xs px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-transparent text-zinc-850 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono leading-relaxed"
                         />
 
@@ -823,6 +835,7 @@ export default function CvBuilderPage() {
                         value={editingContent}
                         onChange={(e) => setEditingContent(e.target.value)}
                         disabled={isSavingEdit}
+                        aria-label="Edit saved bullet content"
                         className="w-full text-xs px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono leading-relaxed"
                       />
                     ) : (
