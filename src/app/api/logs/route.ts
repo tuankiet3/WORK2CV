@@ -138,6 +138,18 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    if (problemSolutionOnly !== null && problemSolutionOnly !== "true" && problemSolutionOnly !== "false") {
+      return Response.json(
+        {
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "problemSolutionOnly must be 'true' or 'false'.",
+          },
+        },
+        { status: 400 }
+      );
+    }
+
     if (fromDate || toDate) {
       const dateCondition: Prisma.DateTimeFilter = {};
       if (fromDate) {
@@ -169,16 +181,20 @@ export async function GET(request: NextRequest) {
 
     if (problemSolutionOnly === "true") {
       andConditions.push({
-        problem: { not: null },
-      });
-      andConditions.push({
-        problem: { not: "" },
-      });
-      andConditions.push({
-        solution: { not: null },
-      });
-      andConditions.push({
-        solution: { not: "" },
+        OR: [
+          {
+            AND: [
+              { problem: { not: null } },
+              { problem: { not: "" } },
+            ],
+          },
+          {
+            AND: [
+              { solution: { not: null } },
+              { solution: { not: "" } },
+            ],
+          },
+        ],
       });
     }
 

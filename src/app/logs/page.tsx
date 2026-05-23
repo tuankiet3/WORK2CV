@@ -274,7 +274,7 @@ export default function LogsPage() {
     if (problemSolutionOnly) {
       const hasProblem = log.problem !== null && log.problem !== undefined && log.problem.trim() !== "";
       const hasSolution = log.solution !== null && log.solution !== undefined && log.solution.trim() !== "";
-      if (!hasProblem || !hasSolution) return false;
+      if (!hasProblem && !hasSolution) return false;
     }
 
     return true;

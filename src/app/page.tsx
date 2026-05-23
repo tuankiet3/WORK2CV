@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ChevronRight,
   TrendingUp,
+  BookOpen,
 } from "lucide-react";
 import TaskTypeBadge from "@/components/TaskTypeBadge";
 import ImpactBadge from "@/components/ImpactBadge";
@@ -330,6 +331,13 @@ async function DashboardContent() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            href="/logs?problemSolutionOnly=true"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-lg shadow-xs transition-all duration-200"
+          >
+            <BookOpen className="h-4 w-4 text-indigo-500" />
+            Problem-Solution Notes
+          </Link>
           <Link
             href="/logs/new"
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow-sm transition-all duration-200"
