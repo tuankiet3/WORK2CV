@@ -342,7 +342,9 @@ export default function WeeklyPage() {
         <div className="flex items-center gap-3 self-end sm:self-auto">
           {/* Custom Date Input Snapper */}
           <div className="relative">
+            <label htmlFor="custom-week-date" className="sr-only">Jump to week containing date</label>
             <input
+              id="custom-week-date"
               type="date"
               value={toDateString(currentDate)}
               onChange={handleCustomDateSelect}

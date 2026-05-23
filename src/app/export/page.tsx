@@ -322,8 +322,17 @@ export default function ExportPage() {
                     return (
                       <div
                         key={log.id}
+                        role="checkbox"
+                        aria-checked={isSelected}
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === " " || e.key === "Enter") {
+                            e.preventDefault();
+                            handleToggleSelect(log.id);
+                          }
+                        }}
                         onClick={() => handleToggleSelect(log.id)}
-                        className={`flex items-start gap-2.5 p-2.5 border rounded-lg transition-all cursor-pointer ${
+                        className={`flex items-start gap-2.5 p-2.5 border rounded-lg transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none ${
                           isSelected
                             ? "bg-indigo-50/10 border-indigo-500/50 dark:bg-indigo-950/5"
                             : "bg-transparent border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
@@ -367,8 +376,17 @@ export default function ExportPage() {
                     return (
                       <div
                         key={review.id}
+                        role="checkbox"
+                        aria-checked={isSelected}
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === " " || e.key === "Enter") {
+                            e.preventDefault();
+                            handleToggleSelect(review.id);
+                          }
+                        }}
                         onClick={() => handleToggleSelect(review.id)}
-                        className={`flex items-start gap-2.5 p-2.5 border rounded-lg transition-all cursor-pointer ${
+                        className={`flex items-start gap-2.5 p-2.5 border rounded-lg transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none ${
                           isSelected
                             ? "bg-indigo-50/10 border-indigo-500/50 dark:bg-indigo-950/5"
                             : "bg-transparent border-zinc-200 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700"
@@ -410,8 +428,17 @@ export default function ExportPage() {
                     return (
                       <div
                         key={bullet.id}
+                        role="checkbox"
+                        aria-checked={isSelected}
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === " " || e.key === "Enter") {
+                            e.preventDefault();
+                            handleToggleSelect(bullet.id);
+                          }
+                        }}
                         onClick={() => handleToggleSelect(bullet.id)}
-                        className={`flex items-start gap-2.5 p-2.5 border rounded-lg transition-all cursor-pointer ${
+                        className={`flex items-start gap-2.5 p-2.5 border rounded-lg transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none ${
                           isSelected
                             ? "bg-indigo-50/10 border-indigo-500/50 dark:bg-indigo-950/5"
                             : "bg-transparent border-zinc-200 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700"

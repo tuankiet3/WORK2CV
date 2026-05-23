@@ -81,7 +81,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 key={item.name}
                 href={item.href}
                 onClick={onClose}
-                className={`flex items-center gap-3.5 px-3.5 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group ${
+                className={`flex items-center gap-3.5 px-3.5 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none ${
                   isActive
                     ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
                     : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900/50 dark:hover:text-zinc-100"
@@ -110,9 +110,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                 Database Status
               </p>
-              <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                Database Pending (Sprint 1)
+              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Supabase Connected
               </p>
             </div>
           </div>

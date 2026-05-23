@@ -385,6 +385,7 @@ export default function LogForm({
                     placeholder="https://github.com/pull/123"
                     value={link}
                     onChange={(e) => handleLinkChange(idx, e.target.value)}
+                    aria-label={`Reference Link ${idx + 1}`}
                     className={`w-full text-sm pl-9 pr-3 py-2 border rounded-md bg-transparent text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
                       fieldErrors[`links.${idx}`] ? "border-red-500" : "border-zinc-200 dark:border-zinc-800"
                     }`}
@@ -397,6 +398,7 @@ export default function LogForm({
                     onClick={() => handleRemoveLink(idx)}
                     className="p-2 border border-zinc-200 dark:border-zinc-800 rounded-md text-zinc-400 hover:text-red-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer"
                     title="Remove link"
+                    aria-label={`Remove Reference Link ${idx + 1}`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -512,6 +514,7 @@ export default function LogForm({
                 placeholder="Tag name (e.g. NextJS)"
                 value={newTagName}
                 onChange={(e) => setNewTagName(e.target.value)}
+                aria-label="New tag name"
                 className="w-full text-xs px-2.5 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded bg-transparent text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
               />
               
@@ -519,6 +522,7 @@ export default function LogForm({
                 <select
                   value={newTagCategory}
                   onChange={(e) => setNewTagCategory(e.target.value as TagCategory)}
+                  aria-label="New tag category"
                   className="flex-grow text-xs px-2.5 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded bg-white dark:bg-zinc-900 text-zinc-950 dark:text-zinc-50 focus:outline-none"
                 >
                   {TAG_CATEGORIES.map((cat) => (
