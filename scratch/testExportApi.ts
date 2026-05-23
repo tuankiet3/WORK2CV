@@ -30,6 +30,7 @@ async function main() {
   // 1. Create a work log with some fields empty, some present
   const testLog = await prisma.workLog.create({
     data: {
+      userId: "00000000-0000-0000-0000-000000000000",
       date: new Date("2026-05-23"),
       title: "Test Log for Markdown Export",
       taskType: "feature",
@@ -45,6 +46,7 @@ async function main() {
   // 2. Create a weekly review
   const testReview = await prisma.weeklyReview.create({
     data: {
+      userId: "00000000-0000-0000-0000-000000000000",
       weekStart: new Date("2026-05-18"),
       weekEnd: new Date("2026-05-24"),
       shipped: "Shipped the export engine.",
@@ -58,6 +60,7 @@ async function main() {
   // 3. Create a CV Bullet accomplishment
   const testBullet = await prisma.cvBullet.create({
     data: {
+      userId: "00000000-0000-0000-0000-000000000000",
       sourceLogIds: [testLog.id],
       content: "Developed the core markdown export engine using Next.js route handlers.",
       tone: "concise_cv",

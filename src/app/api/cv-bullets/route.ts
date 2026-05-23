@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { createValidationErrorResponse } from "@/validation";
 import { z } from "zod";
 import { CV_TONES } from "@/constants";
+import { createClient } from "@/lib/supabase/server";
 
 // Zod schema to validate saving a CV bullet
 const saveCvBulletSchema = z.object({
@@ -20,7 +21,27 @@ const saveCvBulletSchema = z.object({
 
 export async function GET() {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     const bullets = await prisma.cvBullet.findMany({
+      where: {
+        userId: user.id,
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -41,6 +62,23 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     let body;
     try {
       body = await request.json();
@@ -65,10 +103,11 @@ export async function POST(request: NextRequest) {
 
     const { sourceLogIds, content, tone } = result.data;
 
-    // Verify all source log IDs exist in the database before saving
+    // Verify all source log IDs exist in the database and belong to the user
     const existingLogs = await prisma.workLog.findMany({
       where: {
         id: { in: sourceLogIds },
+        userId: user.id,
       },
     });
 
@@ -82,7 +121,7 @@ export async function POST(request: NextRequest) {
             message: "Validation failed.",
             details: missingIds.map((id) => ({
               field: "sourceLogIds",
-              message: `Log ID ${id} does not exist.`,
+              message: `Log ID ${id} does not exist or does not belong to you.`,
             })),
           },
         },
@@ -92,6 +131,7 @@ export async function POST(request: NextRequest) {
 
     const newBullet = await prisma.cvBullet.create({
       data: {
+        userId: user.id,
         sourceLogIds,
         content,
         tone,

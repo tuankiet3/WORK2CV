@@ -36,6 +36,7 @@ async function main() {
     console.log("ℹ️ Database empty. Creating a temporary work log for testing...");
     const tempLog = await prisma.workLog.create({
       data: {
+        userId: "00000000-0000-0000-0000-000000000000",
         date: new Date(),
         title: "Temporary test work log for API verify",
         taskType: "feature",

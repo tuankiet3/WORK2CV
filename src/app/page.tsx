@@ -29,6 +29,7 @@ import {
 } from "@/constants";
 import { prisma } from "@/lib/prisma";
 import { scoreWorkLog } from "@/lib/cvGenerator";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,15 @@ function getCurrentWeekBoundsUTC() {
 }
 
 async function DashboardContent() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return <ErrorState title="Authentication required" description="Please sign in to view the dashboard." />;
+  }
+
   let totalLogs = 0;
   let logsThisWeek = 0;
   let savedCvBullets = 0;
@@ -92,18 +102,23 @@ async function DashboardContent() {
       dbImpactLevelCounts,
       dbCvBullets
     ] = await Promise.all([
-      prisma.workLog.count(),
+      prisma.workLog.count({
+        where: { userId: user.id },
+      }),
       prisma.workLog.count({
         where: {
+          userId: user.id,
           date: {
             gte: startOfWeek,
             lte: endOfWeek,
           },
         },
       }),
-      prisma.cvBullet.count(),
+      prisma.cvBullet.count({
+        where: { userId: user.id },
+      }),
       prisma.tag.findFirst({
-        where: { category: "tech" },
+        where: { category: "tech", userId: user.id },
         select: {
           name: true,
           _count: {
@@ -118,6 +133,7 @@ async function DashboardContent() {
       }),
       prisma.workLog.findMany({
         where: {
+          userId: user.id,
           impactLevel: {
             in: ["implemented", "reviewed", "fixed", "improved"],
           },
@@ -145,6 +161,7 @@ async function DashboardContent() {
         },
         where: {
           category: "tech",
+          userId: user.id,
           workLogs: {
             some: {},
           },
@@ -157,18 +174,21 @@ async function DashboardContent() {
         take: 5,
       }),
       prisma.workLog.groupBy({
+        where: { userId: user.id },
         by: ["taskType"],
         _count: {
           _all: true,
         },
       }),
       prisma.workLog.groupBy({
+        where: { userId: user.id },
         by: ["impactLevel"],
         _count: {
           _all: true,
         },
       }),
       prisma.cvBullet.findMany({
+        where: { userId: user.id },
         orderBy: {
           createdAt: "desc",
         },

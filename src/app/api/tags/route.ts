@@ -2,10 +2,31 @@ import { type NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { createTagSchema, createValidationErrorResponse } from "@/validation";
+import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     const tags = await prisma.tag.findMany({
+      where: {
+        userId: user.id,
+      },
       orderBy: [
         { category: "asc" },
         { name: "asc" },
@@ -29,6 +50,23 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     let body;
     try {
       body = await request.json();
@@ -53,7 +91,7 @@ export async function POST(request: NextRequest) {
 
     const { name, category } = result.data;
 
-    // Check case-insensitive duplicate within the same category
+    // Check case-insensitive duplicate within the same category for this user
     const existingTag = await prisma.tag.findFirst({
       where: {
         name: {
@@ -61,6 +99,7 @@ export async function POST(request: NextRequest) {
           mode: "insensitive",
         },
         category,
+        userId: user.id,
       },
     });
 
@@ -75,6 +114,7 @@ export async function POST(request: NextRequest) {
         data: {
           name,
           category,
+          userId: user.id,
         },
       });
 
@@ -92,6 +132,7 @@ export async function POST(request: NextRequest) {
               mode: "insensitive",
             },
             category,
+            userId: user.id,
           },
         });
         if (raceExistingTag) {

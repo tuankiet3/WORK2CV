@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { updateWorkLogSchema, createValidationErrorResponse } from "@/validation";
+import { createClient } from "@/lib/supabase/server";
 
 const idSchema = z.string().uuid({ message: "Invalid ID format" });
 
@@ -57,6 +58,23 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
     const result = idSchema.safeParse(id);
 
@@ -66,8 +84,8 @@ export async function GET(
       });
     }
 
-    const log = await prisma.workLog.findUnique({
-      where: { id },
+    const log = await prisma.workLog.findFirst({
+      where: { id, userId: user.id },
       include: {
         tags: {
           include: {
@@ -109,6 +127,23 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
     const result = idSchema.safeParse(id);
 
@@ -140,8 +175,8 @@ export async function PATCH(
       });
     }
 
-    const existingLog = await prisma.workLog.findUnique({
-      where: { id },
+    const existingLog = await prisma.workLog.findFirst({
+      where: { id, userId: user.id },
     });
 
     if (!existingLog) {
@@ -163,6 +198,7 @@ export async function PATCH(
       const existingTags = await prisma.tag.findMany({
         where: {
           id: { in: tagIds },
+          userId: user.id,
         },
       });
 
@@ -176,7 +212,7 @@ export async function PATCH(
               message: "Validation failed.",
               details: missingIds.map((id) => ({
                 field: "tagIds",
-                message: `Tag ID ${id} does not exist.`,
+                message: `Tag ID ${id} does not exist or does not belong to you.`,
               })),
             },
           },
@@ -236,6 +272,23 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
     const result = idSchema.safeParse(id);
 
@@ -245,8 +298,8 @@ export async function DELETE(
       });
     }
 
-    const existingLog = await prisma.workLog.findUnique({
-      where: { id },
+    const existingLog = await prisma.workLog.findFirst({
+      where: { id, userId: user.id },
     });
 
     if (!existingLog) {
