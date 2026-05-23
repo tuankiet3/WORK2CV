@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Briefcase, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { AuthError } from "@supabase/supabase-js";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -15,8 +16,49 @@ export default function SignupPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const mapSignupError = (error: AuthError | null): string => {
+    if (!error) return "An unexpected error occurred.";
+    const message = (error.message || "").toLowerCase();
+    const code = error.code || "";
+
+    if (
+      message.includes("rate limit") ||
+      code === "over_email_send_rate_limit" ||
+      code === "over_request_rate_limit"
+    ) {
+      return "Too many signup emails were requested. Please wait a few minutes before trying again, or use a different email for testing.";
+    }
+
+    if (
+      message.includes("already registered") ||
+      message.includes("already exists") ||
+      code === "user_already_exists"
+    ) {
+      return "This email address is already registered. Please try logging in instead.";
+    }
+
+    if (
+      message.includes("weak password") ||
+      message.includes("at least 6 characters") ||
+      code === "weak_password"
+    ) {
+      return "Your password is too weak. Please use a stronger password (at least 6 characters).";
+    }
+
+    if (message.includes("60 seconds") || message.includes("once every")) {
+      return "For security purposes, please wait at least 60 seconds between verification requests.";
+    }
+
+    if (message.includes("invalid email") || code === "email_address_invalid") {
+      return "Please enter a valid email address.";
+    }
+
+    return error.message || "An unexpected error occurred.";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     setIsLoading(true);
     setErrorMsg(null);
     setIsSuccess(false);
@@ -46,7 +88,7 @@ export default function SignupPage() {
       });
 
       if (error) {
-        setErrorMsg(error.message);
+        setErrorMsg(mapSignupError(error));
       } else {
         // Check if confirmation is required
         if (data.session) {
@@ -57,8 +99,8 @@ export default function SignupPage() {
           setIsSuccess(true);
         }
       }
-    } catch {
-      setErrorMsg("An unexpected error occurred. Please try again.");
+    } catch (err: unknown) {
+      setErrorMsg(mapSignupError(err as AuthError));
     } finally {
       setIsLoading(false);
     }
