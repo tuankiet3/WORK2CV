@@ -112,6 +112,9 @@ export default function WeeklyPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 
+  // Overwrite prefill confirmation state
+  const [showPrefillConfirm, setShowPrefillConfirm] = useState<boolean>(false);
+
   // Compute boundaries for the selected week
   const { monday, sunday } = getWeekBounds(currentDate);
   const weekStartStr = toDateString(monday);
@@ -207,13 +210,16 @@ export default function WeeklyPage() {
     }
   };
 
-  const handlePrefill = () => {
+  const handlePrefillClick = () => {
     const hasUnsavedChanges = shipped.trim() || blockers.trim() || learned.trim() || collaboration.trim();
     if (hasUnsavedChanges) {
-      const confirm = window.confirm("Are you sure you want to prefill reflection fields from logs? This will overwrite your current unsaved edits.");
-      if (!confirm) return;
+      setShowPrefillConfirm(true);
+    } else {
+      executePrefill();
     }
+  };
 
+  const executePrefill = () => {
     // 1. Accomplishments (Shipped)
     const shippedLogs = logs.filter((log) =>
       ["feature", "bugfix", "testing", "refactor", "documentation"].includes(log.taskType)
@@ -238,6 +244,7 @@ export default function WeeklyPage() {
     setBlockers(blockersText);
     setLearned(learnedText);
     setCollaboration(collabText);
+    setShowPrefillConfirm(false);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -462,7 +469,7 @@ export default function WeeklyPage() {
                   {logs.length > 0 && (
                     <button
                       type="button"
-                      onClick={handlePrefill}
+                      onClick={handlePrefillClick}
                       disabled={isSaving}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 border border-indigo-200 dark:border-indigo-900 rounded-lg hover:bg-indigo-50/50 dark:hover:bg-indigo-950/10 cursor-pointer transition-all disabled:opacity-50"
                       title="Prefill fields from logs of this week"
@@ -658,6 +665,32 @@ export default function WeeklyPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Prefill Overwrite Confirmation Modal */}
+      {showPrefillConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl max-w-md w-full p-6 shadow-xl animate-scale-in">
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Overwrite Reflection Fields?</h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2">
+              Are you sure you want to prefill reflection fields from logs? This will overwrite your current unsaved edits.
+            </p>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowPrefillConfirm(false)}
+                className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executePrefill}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-semibold cursor-pointer"
+              >
+                Overwrite
+              </button>
+            </div>
           </div>
         </div>
       )}

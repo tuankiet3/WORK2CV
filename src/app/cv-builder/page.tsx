@@ -99,6 +99,11 @@ export default function CvBuilderPage() {
   const [savingBulletIndex, setSavingBulletIndex] = useState<number | null>(null);
   const [savedStatusMap, setSavedStatusMap] = useState<Record<string, boolean>>({});
 
+  // Delete bullet confirmation states
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
+  const [bulletToDeleteId, setBulletToDeleteId] = useState<string | null>(null);
+  const [isDeletingBullet, setIsDeletingBullet] = useState<boolean>(false);
+
   useEffect(() => {
     async function loadData() {
       setIsLoading(true);
@@ -328,13 +333,18 @@ export default function CvBuilderPage() {
     }
   };
 
-  // Delete a saved bullet with browser confirmation
-  const handleDeleteBullet = async (bulletId: string) => {
-    const confirm = window.confirm("Are you sure you want to delete this saved CV bullet?");
-    if (!confirm) return;
+  // Trigger delete confirmation modal
+  const handleDeleteBulletClick = (bulletId: string) => {
+    setBulletToDeleteId(bulletId);
+    setShowDeleteConfirm(true);
+  };
 
+  // Perform delete operation
+  const handleDeleteBulletConfirm = async () => {
+    if (!bulletToDeleteId) return;
+    setIsDeletingBullet(true);
     try {
-      const res = await fetch(`/api/cv-bullets/${bulletId}`, {
+      const res = await fetch(`/api/cv-bullets/${bulletToDeleteId}`, {
         method: "DELETE",
       });
 
@@ -343,10 +353,14 @@ export default function CvBuilderPage() {
         throw new Error(json.error?.message || "Failed to delete CV bullet.");
       }
 
+      setShowDeleteConfirm(false);
+      setBulletToDeleteId(null);
       await fetchSavedBullets();
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Error deleting saved bullet:", err);
       alert(err instanceof Error ? err.message : "Failed to delete bullet.");
+    } finally {
+      setIsDeletingBullet(false);
     }
   };
 
@@ -866,7 +880,7 @@ export default function CvBuilderPage() {
                         </button>
 
                         <button
-                          onClick={() => handleDeleteBullet(bullet.id)}
+                          onClick={() => handleDeleteBulletClick(bullet.id)}
                           className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950/20 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer transition-colors"
                           title="Delete saved bullet"
                         >
@@ -897,6 +911,43 @@ export default function CvBuilderPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl max-w-md w-full p-6 shadow-xl animate-scale-in">
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Delete Saved Bullet?</h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2">
+              Are you sure you want to delete this saved CV bullet? This action is permanent and cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setBulletToDeleteId(null);
+                }}
+                className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteBulletConfirm}
+                disabled={isDeletingBullet}
+                className="px-4 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white rounded-lg text-sm font-semibold flex items-center gap-2 cursor-pointer"
+              >
+                {isDeletingBullet ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete Permanently"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
