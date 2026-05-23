@@ -321,3 +321,84 @@ export function generateCvBullets(logs: WorkLog[]): CvGenerationResult {
     ...(projectEntry ? { projectEntry } : {})
   };
 }
+
+export function scoreWorkLog(log: {
+  title: string;
+  description: string | null;
+  taskType: string;
+  impactLevel: string;
+  problem?: string | null;
+  solution?: string | null;
+  links?: string[];
+  tags?: Array<{ tag: { name: string; category: string } } | { name: string; category: string }>;
+}): number {
+  let score = 0;
+
+  // 1. Score by impact level
+  const impactScores: Record<string, number> = {
+    improved: 30,
+    implemented: 25,
+    fixed: 20,
+    reviewed: 15,
+    assisted: 10,
+    learned: 5,
+  };
+  score += impactScores[log.impactLevel.toLowerCase()] || 0;
+
+  // 2. Add points for problem and solution fields
+  if (log.problem && log.problem.trim().length > 0) score += 10;
+  if (log.solution && log.solution.trim().length > 0) score += 15;
+
+  // 3. Add points for links
+  if (log.links && log.links.length > 0) {
+    score += Math.min(15, log.links.length * 5); // 5 points per link, max 15
+  }
+
+  // 4. Add points for tech tags (category: tech or tool)
+  let techTagsCount = 0;
+  if (log.tags) {
+    techTagsCount = log.tags.filter((t) => {
+      const tagObj = "tag" in t ? t.tag : t;
+      return tagObj.category === "tech" || tagObj.category === "tool";
+    }).length;
+  }
+  score += Math.min(15, techTagsCount * 5); // 5 points per tech tag, max 15
+
+  // 5. Add extra weight for logs involving backend APIs, authentication, JWT/OAuth, databases,
+  // integrations, deployment, testing, debugging, performance, or collaboration
+  const text = `${log.title} ${log.description || ""} ${log.problem || ""} ${log.solution || ""}`.toLowerCase();
+
+  const backendKeywords = [
+    "api", "rest", "graphql", "endpoint", "controller", "http",
+    "auth", "login", "jwt", "oauth", "security", "token", "session", "sign",
+    "database", "db", "sql", "postgres", "mysql", "prisma", "supabase", "query", "index", "migration",
+    "integration", "integrate", "third-party", "stripe", "webhook",
+    "deploy", "docker", "ci/cd", "github actions", "vercel", "hosting",
+    "test", "jest", "playwright", "qa", "assert",
+    "debug", "fix", "resolve", "bug", "crash", "error",
+    "performance", "optimize", "latency", "speed", "scale", "cache", "redis",
+    "collaborate", "review", "team", "pair", "sync", "meeting",
+    "c#", ".net", "asp.net"
+  ];
+
+  let keywordMatches = 0;
+  for (const kw of backendKeywords) {
+    if (text.includes(kw)) {
+      keywordMatches++;
+    }
+  }
+
+  if (log.tags) {
+    log.tags.forEach((t) => {
+      const tagObj = "tag" in t ? t.tag : t;
+      const tagName = tagObj.name.toLowerCase();
+      if (backendKeywords.some(kw => tagName.includes(kw) || kw.includes(tagName))) {
+        keywordMatches += 2;
+      }
+    });
+  }
+
+  score += Math.min(25, keywordMatches * 3);
+
+  return score;
+}

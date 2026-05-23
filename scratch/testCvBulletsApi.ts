@@ -28,7 +28,7 @@ async function main() {
 
   // 0. Ensure we have at least one work log in the database.
   // If none exists, create a temporary one.
-  let logs = await prisma.workLog.findMany();
+  const logs = await prisma.workLog.findMany();
   let createdTempLog = false;
   let testLogId = "";
 
