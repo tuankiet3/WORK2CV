@@ -15,7 +15,8 @@ import {
   Edit,
   Loader2,
   Save,
-  X
+  X,
+  Sparkles
 } from "lucide-react";
 import TaskTypeBadge from "@/components/TaskTypeBadge";
 import ImpactBadge from "@/components/ImpactBadge";
@@ -36,6 +37,9 @@ interface WorkLog {
   taskType: string;
   impactLevel: string;
   description: string | null;
+  problem?: string | null;
+  solution?: string | null;
+  learning?: string | null;
   tags: Tag[];
 }
 
@@ -201,6 +205,39 @@ export default function WeeklyPage() {
       const [year, month, day] = e.target.value.split("-").map(Number);
       setCurrentDate(new Date(Date.UTC(year, month - 1, day)));
     }
+  };
+
+  const handlePrefill = () => {
+    const hasUnsavedChanges = shipped.trim() || blockers.trim() || learned.trim() || collaboration.trim();
+    if (hasUnsavedChanges) {
+      const confirm = window.confirm("Are you sure you want to prefill reflection fields from logs? This will overwrite your current unsaved edits.");
+      if (!confirm) return;
+    }
+
+    // 1. Accomplishments (Shipped)
+    const shippedLogs = logs.filter((log) =>
+      ["feature", "bugfix", "testing", "refactor", "documentation"].includes(log.taskType)
+    );
+    const shippedText = shippedLogs.map((log) => `• ${log.title}`).join("\n");
+
+    // 2. Blockers
+    const blockerLogs = logs.filter((log) => log.problem && log.problem.trim() !== "");
+    const blockersText = blockerLogs.map((log) => `• ${log.title}: ${log.problem}`).join("\n");
+
+    // 3. Lessons Learned
+    const learnedLogs = logs.filter((log) => log.learning && log.learning.trim() !== "");
+    const learnedText = learnedLogs.map((log) => `• ${log.title}: ${log.learning}`).join("\n");
+
+    // 4. Collaboration
+    const collabLogs = logs.filter((log) =>
+      ["meeting", "code_review"].includes(log.taskType) || log.impactLevel === "assisted"
+    );
+    const collabText = collabLogs.map((log) => `• ${log.title}`).join("\n");
+
+    setShipped(shippedText);
+    setBlockers(blockersText);
+    setLearned(learnedText);
+    setCollaboration(collabText);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -418,6 +455,23 @@ export default function WeeklyPage() {
 
             {isEditing ? (
               <form onSubmit={handleSave} className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-5">
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                  <h4 className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                    {review ? "Edit Weekly Reflection" : "New Weekly Reflection"}
+                  </h4>
+                  {logs.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handlePrefill}
+                      disabled={isSaving}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 border border-indigo-200 dark:border-indigo-900 rounded-lg hover:bg-indigo-50/50 dark:hover:bg-indigo-950/10 cursor-pointer transition-all disabled:opacity-50"
+                      title="Prefill fields from logs of this week"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Prefill from Logs
+                    </button>
+                  )}
+                </div>
                 <div className="space-y-4">
                   {/* Accomplishments (Shipped) */}
                   <div>
