@@ -4,6 +4,7 @@ import { createWorkLogSchema, createValidationErrorResponse, strictDateSchema } 
 import { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
 import { TASK_TYPES, IMPACT_LEVELS } from "@/constants";
+import { createClient } from "@/lib/supabase/server";
 
 interface LogTagWithTag {
   tag: {
@@ -55,6 +56,23 @@ function formatWorkLog(log: LogData) {
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = request.nextUrl;
     const q = searchParams.get("q");
     const fromVal = searchParams.get("from");
@@ -64,7 +82,9 @@ export async function GET(request: NextRequest) {
     const tagId = searchParams.get("tagId");
     const problemSolutionOnly = searchParams.get("problemSolutionOnly");
 
-    const andConditions: Prisma.WorkLogWhereInput[] = [];
+    const andConditions: Prisma.WorkLogWhereInput[] = [
+      { userId: user.id },
+    ];
 
     if (q) {
       andConditions.push({
@@ -174,6 +194,9 @@ export async function GET(request: NextRequest) {
         tags: {
           some: {
             tagId: tagId,
+            tag: {
+              userId: user.id,
+            },
           },
         },
       });
@@ -198,7 +221,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const where = andConditions.length > 0 ? { AND: andConditions } : {};
+    const where = { AND: andConditions };
 
     const logs = await prisma.workLog.findMany({
       where,
@@ -233,6 +256,23 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     let body;
     try {
       body = await request.json();
@@ -257,11 +297,12 @@ export async function POST(request: NextRequest) {
 
     const { tagIds, ...logData } = result.data;
 
-    // Check if tagIds exist
+    // Check if tagIds exist and belong to the user
     if (tagIds && tagIds.length > 0) {
       const existingTags = await prisma.tag.findMany({
         where: {
           id: { in: tagIds },
+          userId: user.id,
         },
       });
 
@@ -275,7 +316,7 @@ export async function POST(request: NextRequest) {
               message: "Validation failed.",
               details: missingIds.map((id) => ({
                 field: "tagIds",
-                message: `Tag ID ${id} does not exist.`,
+                message: `Tag ID ${id} does not exist or does not belong to you.`,
               })),
             },
           },
@@ -287,6 +328,7 @@ export async function POST(request: NextRequest) {
     const newLog = await prisma.workLog.create({
       data: {
         ...logData,
+        userId: user.id,
         tags: {
           create: (tagIds || []).map((tagId: string) => ({
             tag: {

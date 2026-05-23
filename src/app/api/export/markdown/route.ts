@@ -8,6 +8,7 @@ import {
   exportCvBulletsToMarkdown,
   exportFullSummaryToMarkdown,
 } from "@/lib/exportFormatter";
+import { createClient } from "@/lib/supabase/server";
 
 const EXPORT_TYPES = ["logs", "weekly_review", "cv_bullets", "full_summary"] as const;
 
@@ -22,6 +23,23 @@ const exportRequestSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     let body;
     try {
       body = await request.json();
@@ -55,6 +73,7 @@ export async function POST(request: NextRequest) {
         dbLogs = await prisma.workLog.findMany({
           where: {
             id: { in: ids },
+            userId: user.id,
           },
           include: {
             tags: {
@@ -75,7 +94,7 @@ export async function POST(request: NextRequest) {
                 message: "Validation failed.",
                 details: missingIds.map((id) => ({
                   field: "ids",
-                  message: `WorkLog ID ${id} does not exist.`,
+                  message: `WorkLog ID ${id} does not exist or does not belong to you.`,
                 })),
               },
             },
@@ -84,6 +103,9 @@ export async function POST(request: NextRequest) {
         }
       } else {
         dbLogs = await prisma.workLog.findMany({
+          where: {
+            userId: user.id,
+          },
           include: {
             tags: {
               include: {
@@ -121,6 +143,7 @@ export async function POST(request: NextRequest) {
         dbReviews = await prisma.weeklyReview.findMany({
           where: {
             id: { in: ids },
+            userId: user.id,
           },
         });
 
@@ -134,7 +157,7 @@ export async function POST(request: NextRequest) {
                 message: "Validation failed.",
                 details: missingIds.map((id) => ({
                   field: "ids",
-                  message: `WeeklyReview ID ${id} does not exist.`,
+                  message: `WeeklyReview ID ${id} does not exist or does not belong to you.`,
                 })),
               },
             },
@@ -143,6 +166,9 @@ export async function POST(request: NextRequest) {
         }
       } else {
         dbReviews = await prisma.weeklyReview.findMany({
+          where: {
+            userId: user.id,
+          },
           orderBy: { weekStart: "desc" },
         });
       }
@@ -166,6 +192,7 @@ export async function POST(request: NextRequest) {
         dbBullets = await prisma.cvBullet.findMany({
           where: {
             id: { in: ids },
+            userId: user.id,
           },
         });
 
@@ -179,7 +206,7 @@ export async function POST(request: NextRequest) {
                 message: "Validation failed.",
                 details: missingIds.map((id) => ({
                   field: "ids",
-                  message: `CvBullet ID ${id} does not exist.`,
+                  message: `CvBullet ID ${id} does not exist or does not belong to you.`,
                 })),
               },
             },
@@ -188,6 +215,9 @@ export async function POST(request: NextRequest) {
         }
       } else {
         dbBullets = await prisma.cvBullet.findMany({
+          where: {
+            userId: user.id,
+          },
           orderBy: { createdAt: "desc" },
         });
       }
@@ -204,6 +234,9 @@ export async function POST(request: NextRequest) {
     } else if (type === "full_summary") {
       const [dbLogs, dbReviews, dbBullets] = await Promise.all([
         prisma.workLog.findMany({
+          where: {
+            userId: user.id,
+          },
           include: {
             tags: {
               include: {
@@ -214,9 +247,15 @@ export async function POST(request: NextRequest) {
           orderBy: { date: "desc" },
         }),
         prisma.weeklyReview.findMany({
+          where: {
+            userId: user.id,
+          },
           orderBy: { weekStart: "desc" },
         }),
         prisma.cvBullet.findMany({
+          where: {
+            userId: user.id,
+          },
           orderBy: { createdAt: "desc" },
         }),
       ]);

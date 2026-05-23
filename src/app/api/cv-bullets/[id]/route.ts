@@ -2,6 +2,7 @@ import { type NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createValidationErrorResponse } from "@/validation";
 import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
 
 // Zod schema for route param validation
 const paramSchema = z.object({
@@ -21,6 +22,23 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     const resolvedParams = await params;
     const paramResult = paramSchema.safeParse(resolvedParams);
     if (!paramResult.success) {
@@ -55,9 +73,9 @@ export async function PATCH(
 
     const { content } = bodyResult.data;
 
-    // Check if CV bullet exists
-    const existingBullet = await prisma.cvBullet.findUnique({
-      where: { id },
+    // Check if CV bullet exists and belongs to this user
+    const existingBullet = await prisma.cvBullet.findFirst({
+      where: { id, userId: user.id },
     });
 
     if (!existingBullet) {
@@ -97,6 +115,23 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     const resolvedParams = await params;
     const paramResult = paramSchema.safeParse(resolvedParams);
     if (!paramResult.success) {
@@ -107,9 +142,9 @@ export async function DELETE(
 
     const { id } = paramResult.data;
 
-    // Check if CV bullet exists
-    const existingBullet = await prisma.cvBullet.findUnique({
-      where: { id },
+    // Check if CV bullet exists and belongs to this user
+    const existingBullet = await prisma.cvBullet.findFirst({
+      where: { id, userId: user.id },
     });
 
     if (!existingBullet) {

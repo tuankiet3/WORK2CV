@@ -4,6 +4,7 @@ import { generateCvBullets } from "@/lib/cvGenerator";
 import { createValidationErrorResponse } from "@/validation";
 import { z } from "zod";
 import { CV_TONES } from "@/constants";
+import { createClient } from "@/lib/supabase/server";
 
 // Target section enum options
 const TARGET_SECTIONS = ["project", "work_experience", "skills_evidence", "internship_report"] as const;
@@ -34,6 +35,23 @@ const generateRequestSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     let body;
     try {
       body = await request.json();
@@ -59,10 +77,11 @@ export async function POST(request: NextRequest) {
     // Unify logIds and sourceLogIds
     const logIds = result.data.logIds || result.data.sourceLogIds || [];
 
-    // Verify all log IDs exist in the database before generating
+    // Verify all log IDs exist in the database and belong to the user
     const existingLogs = await prisma.workLog.findMany({
       where: {
         id: { in: logIds },
+        userId: user.id,
       },
       include: {
         tags: {
@@ -83,7 +102,7 @@ export async function POST(request: NextRequest) {
             message: "Validation failed.",
             details: missingIds.map((id) => ({
               field: "logIds",
-              message: `Log ID ${id} does not exist.`,
+              message: `Log ID ${id} does not exist or does not belong to you.`,
             })),
           },
         },

@@ -14,6 +14,7 @@ datasource db {
 
 model WorkLog {
   id          String       @id @default(uuid())
+  userId      String
   date        DateTime     @db.Date
   title       String
   description String?
@@ -30,18 +31,21 @@ model WorkLog {
   @@index([date])
   @@index([taskType])
   @@index([impactLevel])
+  @@index([userId])
 }
 
 model Tag {
   id        String       @id @default(uuid())
+  userId    String
   name      String
   category  String // tech, domain, skill, tool
   createdAt DateTime     @default(now())
   workLogs  WorkLogTag[]
 
-  @@unique([name, category])
+  @@unique([name, category, userId])
   @@index([category])
   @@index([name])
+  @@index([userId])
 }
 
 model WorkLogTag {
@@ -57,6 +61,7 @@ model WorkLogTag {
 
 model WeeklyReview {
   id            String   @id @default(uuid())
+  userId        String
   weekStart     DateTime @db.Date
   weekEnd       DateTime @db.Date
   shipped       String?
@@ -67,12 +72,14 @@ model WeeklyReview {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  @@unique([weekStart, weekEnd])
+  @@unique([weekStart, weekEnd, userId])
   @@index([weekStart])
+  @@index([userId])
 }
 
 model CvBullet {
   id           String   @id @default(uuid())
+  userId       String
   sourceLogIds String[] // IDs of work logs used as source
   content      String
   tone         String // concise_cv, detailed_cv, internship_report
@@ -80,4 +87,5 @@ model CvBullet {
   updatedAt    DateTime @updatedAt
 
   @@index([tone])
+  @@index([userId])
 }

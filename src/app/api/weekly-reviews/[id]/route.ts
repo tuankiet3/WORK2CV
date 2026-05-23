@@ -2,6 +2,7 @@ import { type NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createValidationErrorResponse, strictDateSchema } from "@/validation";
 import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
 
 function formatWeeklyReview(review: {
   id: string;
@@ -44,6 +45,23 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
 
     // Validate ID format
@@ -54,9 +72,9 @@ export async function PATCH(
       });
     }
 
-    // Retrieve existing review
-    const existing = await prisma.weeklyReview.findUnique({
-      where: { id },
+    // Retrieve existing review owned by this user
+    const existing = await prisma.weeklyReview.findFirst({
+      where: { id, userId: user.id },
     });
 
     if (!existing) {
@@ -115,12 +133,13 @@ export async function PATCH(
       );
     }
 
-    // Prevent duplicate week conflicts
+    // Prevent duplicate week conflicts for this user
     if (result.data.weekStart || result.data.weekEnd) {
       const duplicate = await prisma.weeklyReview.findFirst({
         where: {
           weekStart,
           weekEnd,
+          userId: user.id,
           id: { not: id },
         },
       });
@@ -172,6 +191,23 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
 
     // Validate ID format
@@ -182,9 +218,9 @@ export async function DELETE(
       });
     }
 
-    // Check existence
-    const existing = await prisma.weeklyReview.findUnique({
-      where: { id },
+    // Check existence and ownership
+    const existing = await prisma.weeklyReview.findFirst({
+      where: { id, userId: user.id },
     });
 
     if (!existing) {

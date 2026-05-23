@@ -1,6 +1,7 @@
 import { type NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { weeklyReviewSchema, createValidationErrorResponse } from "@/validation";
+import { createClient } from "@/lib/supabase/server";
 
 function formatWeeklyReview(review: {
   id: string;
@@ -30,7 +31,27 @@ function formatWeeklyReview(review: {
 
 export async function GET() {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     const reviews = await prisma.weeklyReview.findMany({
+      where: {
+        userId: user.id,
+      },
       orderBy: {
         weekStart: "desc",
       },
@@ -54,6 +75,23 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return Response.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     let body;
     try {
       body = await request.json();
@@ -78,12 +116,13 @@ export async function POST(request: NextRequest) {
 
     const { weekStart, weekEnd, shipped, blockers, learned, collaboration, nextFocus } = result.data;
 
-    // Check if duplicate week range exists
+    // Check if duplicate week range exists for this user
     const existing = await prisma.weeklyReview.findUnique({
       where: {
-        weekStart_weekEnd: {
+        weekStart_weekEnd_userId: {
           weekStart,
           weekEnd,
+          userId: user.id,
         },
       },
     });
@@ -106,6 +145,7 @@ export async function POST(request: NextRequest) {
     // Create a new record
     const newReview = await prisma.weeklyReview.create({
       data: {
+        userId: user.id,
         weekStart,
         weekEnd,
         shipped: shipped || null,

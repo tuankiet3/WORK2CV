@@ -1,8 +1,26 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TASK_TYPES, IMPACT_LEVELS, TAG_CATEGORIES } from "@/constants";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required.",
+        },
+      },
+      { status: 401 }
+    );
+  }
+
   // Validate API key presence
   const apiKey = process.env.OPENROUTER_API_KEY;
   const model = process.env.OPENROUTER_MODEL;
@@ -49,8 +67,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    // 1. Fetch existing tags in the database to match them
+    // 1. Fetch existing tags in the database for the current user to match them
     const existingTags = await prisma.tag.findMany({
+      where: {
+        userId: user.id,
+      },
       select: {
         id: true,
         name: true,

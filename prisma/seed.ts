@@ -12,6 +12,8 @@ const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
+const seedUserId = "00000000-0000-0000-0000-000000000000";
+
 async function main() {
   if (process.env.ALLOW_DESTRUCTIVE_SEED !== "true") {
     console.error("⚠️  SAFETY GUARD: Seed execution stopped.");
@@ -59,6 +61,7 @@ async function main() {
   for (const data of tagData) {
     const created = await prisma.tag.create({
       data: {
+        userId: seedUserId,
         name: data.name,
         category: data.category,
       },
@@ -159,6 +162,7 @@ async function main() {
   for (const item of logsData) {
     const created = await prisma.workLog.create({
       data: {
+        userId: seedUserId,
         date: item.date,
         title: item.title,
         description: item.description,
@@ -191,6 +195,7 @@ async function main() {
   console.log("📅 Seeding WeeklyReview entities...");
   const weekly = await prisma.weeklyReview.create({
     data: {
+      userId: seedUserId,
       weekStart: new Date("2026-05-11"),
       weekEnd: new Date("2026-05-17"),
       shipped: "Completed the project scaffolding, configured environment setups, initialized global settings slice state management using Zustand, and refactored backend error handling middleware.",
@@ -219,7 +224,10 @@ async function main() {
 
   for (const bullet of bullets) {
     await prisma.cvBullet.create({
-      data: bullet,
+      data: {
+        ...bullet,
+        userId: seedUserId,
+      },
     });
   }
   console.log(`✅ Seeded ${bullets.length} saved CV bullets.`);
