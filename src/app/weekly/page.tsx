@@ -11,7 +11,11 @@ import {
   AlertCircle,
   CheckCircle2,
   Users,
-  Compass
+  Compass,
+  Edit,
+  Loader2,
+  Save,
+  X
 } from "lucide-react";
 import TaskTypeBadge from "@/components/TaskTypeBadge";
 import ImpactBadge from "@/components/ImpactBadge";
@@ -85,7 +89,6 @@ function formatHumanDate(dateStr: string) {
 
 export default function WeeklyPage() {
   const [currentDate, setCurrentDate] = useState<Date>(() => {
-    // Default to current week based on UTC date
     return new Date();
   });
 
@@ -93,6 +96,17 @@ export default function WeeklyPage() {
   const [review, setReview] = useState<WeeklyReview | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Form states
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [shipped, setShipped] = useState<string>("");
+  const [blockers, setBlockers] = useState<string>("");
+  const [learned, setLearned] = useState<string>("");
+  const [collaboration, setCollaboration] = useState<string>("");
+  const [nextFocus, setNextFocus] = useState<string>("");
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 
   // Compute boundaries for the selected week
   const { monday, sunday } = getWeekBounds(currentDate);
@@ -102,13 +116,15 @@ export default function WeeklyPage() {
   const fetchWeekData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    setSaveSuccess(false);
+    setSaveError(null);
     try {
       // 1. Fetch logs in the date range
       const logsRes = await fetch(`/api/logs?from=${weekStartStr}&to=${weekEndStr}`);
       if (!logsRes.ok) {
         throw new Error(`Failed to fetch weekly logs (Status: ${logsRes.status})`);
       }
-      const logsJson = await logsRes.ok ? await logsRes.json() : { data: [] };
+      const logsJson = await logsRes.json();
       if (logsJson.error) {
         throw new Error(logsJson.error.message);
       }
@@ -118,7 +134,7 @@ export default function WeeklyPage() {
       if (!reviewsRes.ok) {
         throw new Error(`Failed to fetch weekly reviews (Status: ${reviewsRes.status})`);
       }
-      const reviewsJson = await reviewsRes.ok ? await reviewsRes.json() : { data: [] };
+      const reviewsJson = await reviewsRes.json();
       if (reviewsJson.error) {
         throw new Error(reviewsJson.error.message);
       }
@@ -130,6 +146,23 @@ export default function WeeklyPage() {
 
       setLogs(logsJson.data || []);
       setReview(matched || null);
+
+      // Populate form
+      if (matched) {
+        setShipped(matched.shipped || "");
+        setBlockers(matched.blockers || "");
+        setLearned(matched.learned || "");
+        setCollaboration(matched.collaboration || "");
+        setNextFocus(matched.nextFocus || "");
+        setIsEditing(false);
+      } else {
+        setShipped("");
+        setBlockers("");
+        setLearned("");
+        setCollaboration("");
+        setNextFocus("");
+        setIsEditing(true);
+      }
     } catch (err: unknown) {
       console.error("Error loading weekly data:", err);
       setError(err instanceof Error ? err.message : "An unexpected error occurred while loading weekly data.");
@@ -166,8 +199,55 @@ export default function WeeklyPage() {
   const handleCustomDateSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.value) {
       const [year, month, day] = e.target.value.split("-").map(Number);
-      // Construct date as UTC to prevent timezone offsets shifting snapping
       setCurrentDate(new Date(Date.UTC(year, month - 1, day)));
+    }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
+
+    const payload = {
+      weekStart: weekStartStr,
+      weekEnd: weekEndStr,
+      shipped: shipped.trim() || null,
+      blockers: blockers.trim() || null,
+      learned: learned.trim() || null,
+      collaboration: collaboration.trim() || null,
+      nextFocus: nextFocus.trim() || null,
+    };
+
+    try {
+      let url = "/api/weekly-reviews";
+      let method = "POST";
+
+      if (review && review.id) {
+        url = `/api/weekly-reviews/${review.id}`;
+        method = "PATCH";
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || json.error) {
+        throw new Error(json.error?.message || "Failed to save weekly reflection.");
+      }
+
+      setSaveSuccess(true);
+      setReview(json.data);
+      setIsEditing(false);
+    } catch (err: unknown) {
+      console.error("Error saving reflection:", err);
+      setSaveError(err instanceof Error ? err.message : "An unexpected error occurred while saving.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -243,8 +323,8 @@ export default function WeeklyPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
-          {/* Column 1: Logs this week (Span 3) */}
-          <div className="lg:col-span-3 space-y-4">
+          {/* Column 1: Logs this week (Span 2) */}
+          <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between border-b border-zinc-150 dark:border-zinc-850 pb-2">
               <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider flex items-center gap-2">
                 <FileText className="h-4 w-4 text-indigo-500" />
@@ -253,7 +333,7 @@ export default function WeeklyPage() {
             </div>
 
             {logs.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-[700px] overflow-y-auto pr-1">
                 {logs.map((log) => (
                   <div
                     key={log.id}
@@ -313,84 +393,214 @@ export default function WeeklyPage() {
             )}
           </div>
 
-          {/* Column 2: Weekly Review Status (Span 2) */}
-          <div className="lg:col-span-2 space-y-4">
+          {/* Column 2: Weekly Review Status & Form (Span 3) */}
+          <div className="lg:col-span-3 space-y-4">
             <div className="flex items-center justify-between border-b border-zinc-150 dark:border-zinc-850 pb-2">
               <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-indigo-500" />
-                Review Status
+                Reflection summary
               </h3>
             </div>
 
-            {review ? (
-              <div className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100/50 dark:border-emerald-900/20">
-                    Review Saved
-                  </span>
+            {saveSuccess && (
+              <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 text-sm text-emerald-800 dark:text-emerald-300 flex items-center gap-3 shadow-xs">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+                <div>Weekly reflection saved successfully!</div>
+              </div>
+            )}
+
+            {saveError && (
+              <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 text-sm text-red-800 dark:text-red-300 flex items-start gap-3 shadow-xs">
+                <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
+                <div>{saveError}</div>
+              </div>
+            )}
+
+            {isEditing ? (
+              <form onSubmit={handleSave} className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-5">
+                <div className="space-y-4">
+                  {/* Accomplishments (Shipped) */}
+                  <div>
+                    <label htmlFor="shipped" className="block text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
+                      Accomplishments / Shipped
+                    </label>
+                    <textarea
+                      id="shipped"
+                      rows={3}
+                      placeholder="List key tasks, PRs, features, or fixes completed this week..."
+                      value={shipped}
+                      onChange={(e) => setShipped(e.target.value)}
+                      disabled={isSaving}
+                      className="w-full text-sm px-3.5 py-2 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                    />
+                  </div>
+
+                  {/* Blockers */}
+                  <div>
+                    <label htmlFor="blockers" className="block text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
+                      Blockers & Difficulties
+                    </label>
+                    <textarea
+                      id="blockers"
+                      rows={2}
+                      placeholder="Explain any blockers, architectural issues, or technical challenges faced..."
+                      value={blockers}
+                      onChange={(e) => setBlockers(e.target.value)}
+                      disabled={isSaving}
+                      className="w-full text-sm px-3.5 py-2 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                    />
+                  </div>
+
+                  {/* Learned */}
+                  <div>
+                    <label htmlFor="learned" className="block text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
+                      Technical Lessons Learned
+                    </label>
+                    <textarea
+                      id="learned"
+                      rows={2}
+                      placeholder="Write down any new frameworks, optimizations, or coding styles discovered..."
+                      value={learned}
+                      onChange={(e) => setLearned(e.target.value)}
+                      disabled={isSaving}
+                      className="w-full text-sm px-3.5 py-2 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                    />
+                  </div>
+
+                  {/* Collaboration */}
+                  <div>
+                    <label htmlFor="collaboration" className="block text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
+                      Mentor & Team Collaboration Notes
+                    </label>
+                    <textarea
+                      id="collaboration"
+                      rows={2}
+                      placeholder="Record pair-programming details, reviews, or key takeaways from team meetings..."
+                      value={collaboration}
+                      onChange={(e) => setCollaboration(e.target.value)}
+                      disabled={isSaving}
+                      className="w-full text-sm px-3.5 py-2 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                    />
+                  </div>
+
+                  {/* Next Focus */}
+                  <div>
+                    <label htmlFor="nextFocus" className="block text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
+                      Focus / Goals for Next Week
+                    </label>
+                    <textarea
+                      id="nextFocus"
+                      rows={2}
+                      placeholder="Outline key priorities, tasks, or learnings planned for next week..."
+                      value={nextFocus}
+                      onChange={(e) => setNextFocus(e.target.value)}
+                      disabled={isSaving}
+                      className="w-full text-sm px-3.5 py-2 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-3.5 text-xs border-t border-zinc-100 dark:border-zinc-800 pt-3.5">
-                  {review.shipped && (
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800/80">
+                  {review && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditing(false);
+                        setSaveError(null);
+                      }}
+                      disabled={isSaving}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 disabled:opacity-50 cursor-pointer transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      Cancel
+                    </button>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow-sm disabled:opacity-50 cursor-pointer transition-all"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Saving Reflection...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-3.5 w-3.5" />
+                        Save Reflection
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-5">
+                <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                  <span className="inline-flex px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100/50 dark:border-emerald-900/20">
+                    Reflection Saved
+                  </span>
+
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 cursor-pointer transition-colors"
+                  >
+                    <Edit className="h-3.5 w-3.5" />
+                    Edit Reflection
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {review?.shipped && (
                     <div className="space-y-1">
-                      <h4 className="font-bold text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      <h4 className="font-bold text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
                         Accomplishments
                       </h4>
-                      <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed font-mono whitespace-pre-wrap">{review.shipped}</p>
+                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed pl-5.5 whitespace-pre-wrap">{review.shipped}</p>
                     </div>
                   )}
 
-                  {review.blockers && (
+                  {review?.blockers && (
                     <div className="space-y-1">
-                      <h4 className="font-bold text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
-                        <AlertCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />
-                        Blockers / Issues
+                      <h4 className="font-bold text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                        <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
+                        Blockers & Challenges
                       </h4>
-                      <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed font-mono whitespace-pre-wrap">{review.blockers}</p>
+                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed pl-5.5 whitespace-pre-wrap">{review.blockers}</p>
                     </div>
                   )}
 
-                  {review.learned && (
+                  {review?.learned && (
                     <div className="space-y-1">
-                      <h4 className="font-bold text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
-                        <BookOpen className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                        Technical Takeaways
+                      <h4 className="font-bold text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                        <BookOpen className="h-4 w-4 text-indigo-500 shrink-0" />
+                        Technical Lessons
                       </h4>
-                      <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed font-mono whitespace-pre-wrap">{review.learned}</p>
+                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed pl-5.5 whitespace-pre-wrap">{review.learned}</p>
                     </div>
                   )}
 
-                  {review.collaboration && (
+                  {review?.collaboration && (
                     <div className="space-y-1">
-                      <h4 className="font-bold text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
-                        <Users className="h-3.5 w-3.5 text-fuchsia-500 shrink-0" />
-                        Mentoring & Collaboration
+                      <h4 className="font-bold text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                        <Users className="h-4 w-4 text-fuchsia-500 shrink-0" />
+                        Mentor & Team Collaboration
                       </h4>
-                      <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed font-mono whitespace-pre-wrap">{review.collaboration}</p>
+                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed pl-5.5 whitespace-pre-wrap">{review.collaboration}</p>
                     </div>
                   )}
 
-                  {review.nextFocus && (
+                  {review?.nextFocus && (
                     <div className="space-y-1">
-                      <h4 className="font-bold text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
-                        <Compass className="h-3.5 w-3.5 text-sky-500 shrink-0" />
-                        Next Week Goals
+                      <h4 className="font-bold text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                        <Compass className="h-4 w-4 text-sky-500 shrink-0" />
+                        Next Week Focus
                       </h4>
-                      <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed font-mono whitespace-pre-wrap">{review.nextFocus}</p>
+                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed pl-5.5 whitespace-pre-wrap">{review.nextFocus}</p>
                     </div>
                   )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center p-8 bg-zinc-50/50 dark:bg-zinc-900/10 border border-zinc-200 dark:border-zinc-800 rounded-xl text-center">
-                <AlertCircle className="h-8 w-8 text-zinc-400 mb-2" />
-                <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-200">Reflection Pending</h4>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-xs">
-                  No reflection review has been submitted for this week yet.
-                </p>
-                <div className="mt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest bg-zinc-100 dark:bg-zinc-900 px-3.5 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded-md">
-                  Reflection Form Coming in SB-027
                 </div>
               </div>
             )}
