@@ -340,7 +340,7 @@ export default function ExportPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 text-[9px] font-mono text-zinc-400">
-                            <span>{new Date(log.date).toLocaleDateString()}</span>
+                            <span>{log.date}</span>
                             <span>&bull;</span>
                             <TaskTypeBadge type={log.taskType} />
                           </div>
