@@ -1,16 +1,68 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, AlertCircle } from "lucide-react";
-import LogForm from "@/components/LogForm";
+import LogForm, { type LogFormInitialData } from "@/components/LogForm";
+import AiAssistantPanel, { type AiAssistantDraft } from "@/components/AiAssistantPanel";
 
 export default function NewLogPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // AI draft hydration states
+  const [formKey, setFormKey] = useState<number>(0);
+  const [draftData, setDraftData] = useState<LogFormInitialData | undefined>(undefined);
+  const [availableTags, setAvailableTags] = useState<Array<{ id: string; name: string; category: string }>>([]);
+
+  // Fetch available tags in parent page to resolve AI matched tag names to database IDs
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const res = await fetch("/api/tags");
+        if (res.ok) {
+          const json = await res.json();
+          setAvailableTags(json.data || []);
+        }
+      } catch (err) {
+        console.error("Error fetching tags in NewLogPage:", err);
+      }
+    };
+    fetchTags();
+  }, []);
+
+  const handleApplyDraft = (draft: AiAssistantDraft) => {
+    // Map tag names to existing database tag IDs
+    const matchedTagIds: string[] = [];
+    if (draft.matchedTagNames && Array.isArray(draft.matchedTagNames)) {
+      draft.matchedTagNames.forEach((name: string) => {
+        const found = availableTags.find(t => t.name.toLowerCase() === name.toLowerCase());
+        if (found) {
+          matchedTagIds.push(found.id);
+        }
+      });
+    }
+
+    const initial: LogFormInitialData = {
+      date: new Date().toISOString().split("T")[0],
+      title: draft.title || "",
+      description: draft.description || "",
+      taskType: draft.taskType || "feature",
+      impactLevel: draft.impactLevel || "implemented",
+      tagIds: matchedTagIds,
+      problem: draft.problem || "",
+      solution: draft.solution || "",
+      learning: draft.learning || "",
+      links: draft.links && draft.links.length > 0 ? draft.links : [""],
+    };
+
+    setDraftData(initial);
+    // Remount LogForm to re-initialize form state with the new draft values
+    setFormKey(prev => prev + 1);
+  };
 
   const handleSubmit = async (payload: {
     date: string;
@@ -56,7 +108,7 @@ export default function NewLogPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="space-y-6 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-zinc-200 dark:border-zinc-800 pb-5">
         <Link
@@ -76,14 +128,19 @@ export default function NewLogPage() {
         </div>
       </div>
 
+      {/* AI Assistant panel */}
+      <AiAssistantPanel onApplyDraft={handleApplyDraft} />
+
       {formError && (
-        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 text-sm text-red-800 dark:text-red-300 flex items-start gap-3 animate-fade-in">
+        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 text-sm text-red-800 dark:text-red-300 flex items-start gap-3">
           <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
           <div>{formError}</div>
         </div>
       )}
 
       <LogForm
+        key={formKey}
+        initialData={draftData}
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         submitButtonLabel="Save Work Log"
