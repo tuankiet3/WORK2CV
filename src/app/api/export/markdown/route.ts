@@ -44,7 +44,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const { type, ids = [] } = result.data;
+    const { type, ids: rawIds = [] } = result.data;
+    const ids = Array.from(new Set(rawIds));
 
     let markdown = "";
 

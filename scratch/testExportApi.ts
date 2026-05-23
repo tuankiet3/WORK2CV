@@ -241,6 +241,31 @@ async function main() {
     return { success: true, message: "Rejected unknown Log ID." };
   });
 
+  // Test 8: Export with duplicate Log IDs (should deduplicate and succeed)
+  await runTest("POST /api/export/markdown: Deduplicates duplicate Log IDs and succeeds", async () => {
+    const body = {
+      type: "logs",
+      ids: [testLogId, testLogId],
+    };
+    const req = new NextRequest("http://localhost/api/export/markdown", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    const res = await exportMarkdown(req);
+    const data = await res.json();
+
+    if (res.status !== 200) {
+      return { success: false, message: `Expected 200, got ${res.status}. Body: ${JSON.stringify(data)}` };
+    }
+
+    const md = data.data?.markdown;
+    if (!md || !md.includes("Test Log for Markdown Export")) {
+      return { success: false, message: `Markdown output incorrect: ${md}` };
+    }
+
+    return { success: true, message: "Successfully handled duplicate Log IDs in request." };
+  });
+
   // Cleanup temporary test records
   console.log("🧹 Cleaning up test database records...");
   await Promise.all([
