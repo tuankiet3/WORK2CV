@@ -425,7 +425,7 @@ async function DashboardContent() {
                 </div>
                 <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-200">No highlights yet</h3>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-xs">
-                  {"Create a work log with 'Implemented', 'Fixed', or 'Improved' impact to see it featured here."}
+                  {"Create a work log with 'Implemented', 'Reviewed', 'Fixed', or 'Improved' impact to see it featured here."}
                 </p>
                 <Link
                   href="/logs/new"
