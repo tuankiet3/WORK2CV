@@ -105,5 +105,9 @@ Recommended free deployment path:
 
 Do not use SQLite or local PostgreSQL for Work2CV persistence. Local development, preview, and production should all use Supabase hosted database.
 
+## QA Checklist
+
+A detailed checklist for manual verification of the MVP features, validation logic, accessibility, and deployment readiness can be found in [QA-CHECKLIST.md](file:///D:/WorkSpace/IndividualProject/Work2CV/docs/QA-CHECKLIST.md). Use it to verify the app's correctness before finalizing feature tasks.
+
 
 
