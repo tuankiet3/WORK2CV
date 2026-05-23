@@ -10,6 +10,7 @@ import {
   ChevronRight,
   TrendingUp,
   BookOpen,
+  Sparkles,
 } from "lucide-react";
 import TaskTypeBadge from "@/components/TaskTypeBadge";
 import ImpactBadge from "@/components/ImpactBadge";
@@ -27,6 +28,7 @@ import {
   IMPACT_LEVEL_LABELS,
 } from "@/constants";
 import { prisma } from "@/lib/prisma";
+import { scoreWorkLog } from "@/lib/cvGenerator";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +69,7 @@ async function DashboardContent() {
     impact: string;
     desc: string;
     tags: Array<{ name: string; category: TagCategory }>;
+    score: number;
   }> = [];
   let topTags: Array<{ name: string; count: number; category: TagCategory }> = [];
   let taskTypes: Array<{ name: string; type: TaskType; percentage: number; count: number; color: string }> = [];
@@ -178,7 +181,7 @@ async function DashboardContent() {
     savedCvBullets = dbSavedCvBullets;
     topTechTag = dbTopTechTag;
 
-    highlights = dbHighlights.map((log) => ({
+    const scoredHighlights = dbHighlights.map((log) => ({
       id: log.id,
       title: log.title,
       date: log.date.toISOString().split("T")[0],
@@ -189,7 +192,19 @@ async function DashboardContent() {
         name: t.tag.name,
         category: t.tag.category as TagCategory,
       })),
+      score: scoreWorkLog({
+        title: log.title,
+        description: log.description,
+        taskType: log.taskType,
+        impactLevel: log.impactLevel,
+        problem: log.problem,
+        solution: log.solution,
+        links: log.links,
+        tags: log.tags.map((t) => t.tag),
+      }),
     }));
+
+    highlights = scoredHighlights.sort((a, b) => b.score - a.score);
 
     topTags = dbTopTags.map((tag) => ({
       name: tag.name,
@@ -399,6 +414,12 @@ async function DashboardContent() {
                         <span className="h-1 w-1 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
                         <TaskTypeBadge type={log.type} />
                         <ImpactBadge impact={log.impact} />
+                        {log.score >= 50 && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-900/20 uppercase tracking-wide">
+                            <Sparkles className="h-2.5 w-2.5 text-amber-500 animate-pulse" />
+                            CV Suggestion
+                          </span>
+                        )}
                       </div>
                     </div>
                     <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mt-2 transition-colors">
