@@ -2,13 +2,11 @@
 
 import React, { useState, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Briefcase, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { AuthError } from "@supabase/supabase-js";
 
 export default function SignupPage() {
-  const router = useRouter();
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -99,8 +97,7 @@ export default function SignupPage() {
         // Check if confirmation is required
         if (data.session) {
           // Automatic login if email confirmation is disabled
-          router.push("/");
-          router.refresh();
+          window.location.href = "/";
         } else {
           setIsSuccess(true);
         }

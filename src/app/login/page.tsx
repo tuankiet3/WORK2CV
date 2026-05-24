@@ -2,13 +2,11 @@
 
 import React, { useState, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Briefcase, Loader2, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { AuthError } from "@supabase/supabase-js";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -67,8 +65,7 @@ export default function LoginPage() {
       if (error) {
         setErrorMsg(mapLoginError(error));
       } else {
-        router.push("/");
-        router.refresh();
+        window.location.href = "/";
       }
     } catch (err: unknown) {
       setErrorMsg(mapLoginError(err as AuthError));

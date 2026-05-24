@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
@@ -19,9 +19,9 @@ import { type User as SupabaseUser } from "@supabase/supabase-js";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Work Logs", href: "/logs", icon: FileText },
-  { name: "New Log", href: "/logs/new", icon: PlusCircle },
-  { name: "Weekly Review", href: "/weekly", icon: Calendar },
+  { name: "My Logs", href: "/logs", icon: FileText },
+  { name: "New Log Entry", href: "/logs/new", icon: PlusCircle },
+  { name: "Weekly Reflection", href: "/weekly", icon: Calendar },
   { name: "CV Builder", href: "/cv-builder", icon: Briefcase },
   { name: "Export Center", href: "/export", icon: Download },
   { name: "Account Settings", href: "/account", icon: User },
@@ -34,7 +34,6 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const [user, setUser] = useState<SupabaseUser | null>(null);
 
   useEffect(() => {
@@ -58,7 +57,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     const supabase = createClient();
     await supabase.auth.signOut();
     onClose();
-    router.push("/login");
+    window.location.href = "/login";
   };
 
   return (
