@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Briefcase, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
@@ -15,6 +15,7 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const isSubmittingRef = useRef(false);
 
   const mapSignupError = (error: AuthError | null): string => {
     if (!error) return "An unexpected error occurred.";
@@ -58,7 +59,8 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return;
+    if (isSubmittingRef.current || isLoading) return;
+    isSubmittingRef.current = true;
     setIsLoading(true);
     setErrorMsg(null);
     setIsSuccess(false);
@@ -66,14 +68,18 @@ export default function SignupPage() {
     if (!email.trim() || !password.trim()) {
       setErrorMsg("Please enter both email and password.");
       setIsLoading(false);
+      isSubmittingRef.current = false;
       return;
     }
 
     if (password.length < 6) {
       setErrorMsg("Password must be at least 6 characters.");
       setIsLoading(false);
+      isSubmittingRef.current = false;
       return;
     }
+
+    console.log("[SignupFlow] Processing signup request for email:", email.trim());
 
     try {
       const supabase = createClient();
@@ -103,6 +109,7 @@ export default function SignupPage() {
       setErrorMsg(mapSignupError(err as AuthError));
     } finally {
       setIsLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 

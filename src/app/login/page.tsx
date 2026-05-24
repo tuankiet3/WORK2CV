@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Briefcase, Loader2, AlertCircle } from "lucide-react";
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const isSubmittingRef = useRef(false);
 
   const mapLoginError = (error: AuthError | null): string => {
     if (!error) return "An unexpected error occurred.";
@@ -44,13 +45,15 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return;
+    if (isSubmittingRef.current || isLoading) return;
+    isSubmittingRef.current = true;
     setIsLoading(true);
     setErrorMsg(null);
 
     if (!email.trim() || !password.trim()) {
       setErrorMsg("Please enter both email and password.");
       setIsLoading(false);
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -71,6 +74,7 @@ export default function LoginPage() {
       setErrorMsg(mapLoginError(err as AuthError));
     } finally {
       setIsLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 
