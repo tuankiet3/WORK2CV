@@ -145,7 +145,7 @@ If "isDraftReady" is true, "followUpQuestion" should be null, and "draft" must b
     }
 
     // 4. Call OpenRouter
-    const openRouterModel = model || "google/gemini-2.5-pro";
+    const openRouterModel = model || "google/gemini-2.5-flash";
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
